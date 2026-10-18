@@ -396,7 +396,9 @@
     $("radar").addEventListener("close", narRadarLukkes);
     // Et trykk på den mørke bakgrunnen utenfor panelet lukker det.
     $("radar").addEventListener("click", function (e) {
-      if (e.target === $("radar")) lukkRadar();
+      var r = $("radar").getBoundingClientRect();
+      var utenfor = e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+      if (e.target === $("radar") && utenfor) lukkRadar();
     });
   }
 
