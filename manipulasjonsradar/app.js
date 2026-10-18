@@ -479,6 +479,19 @@
 
   // ---------- Tastatur ----------
 
+  // Piltaster, Page Up/Down og mellomrom blar gjennom feeden (nyttig på en delt skjerm).
+  var TASTER = { ArrowDown: 1, ArrowRight: 1, PageDown: 1, ArrowUp: -1, ArrowLeft: -1, PageUp: -1 };
+
+  function vedTast(e) {
+    if ($("skjerm-feed").hidden || $("radar").open) return;
+    var steg = TASTER[e.key];
+    // Mellomrom på en knapp trykker knappen, som vanlig.
+    if (e.key === " " && !e.target.closest("button, summary, a")) steg = e.shiftKey ? -1 : 1;
+    if (!steg) return;
+    e.preventDefault();
+    gaTil(tilstand.aktivt + steg, true);
+  }
+
   // ---------- Oppstart ----------
 
   function kobleKnapper() {
@@ -514,6 +527,7 @@
       settModus("alene");
       visSkjerm("skjerm-start");
     });
+    document.addEventListener("keydown", vedTast);
   }
 
   function start() {
