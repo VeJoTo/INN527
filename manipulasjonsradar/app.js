@@ -128,6 +128,7 @@
 
   function lagKort(innlegg, i) {
     var kort = lagElement("li", null, "kort");
+    kort.setAttribute("tabindex", "-1"); // kan få fokus fra tastaturnavigasjon, men ikke med Tab
     kort.setAttribute("data-indeks", i);
     kort.setAttribute("aria-label", R.fyllInn(T.feed.kortEtikett, { nr: i + 1, totalt: C.innlegg.length }));
     kort.style.setProperty("--fra", innlegg.bakgrunn[0]);
@@ -181,10 +182,11 @@
 
   function lagSluttkort() {
     var kort = lagElement("li", null, "kort kort-slutt");
+    kort.setAttribute("tabindex", "-1");
     kort.setAttribute("data-indeks", C.innlegg.length);
     var innhold = lagElement("div", null, "self-center");
     innhold.appendChild(lagElement("h2", T.feed.sluttTittel, "display mb-4 text-4xl"));
-    innhold.appendChild(lagElement("p", T.feed.sluttTekst, "mb-8 text-xl text-dempet"));
+    innhold.appendChild(lagElement("p", R.fyllInn(T.feed.sluttTekst, { totalt: C.innlegg.length }), "mb-8 text-xl text-dempet"));
     var knapp = lagElement("button", T.feed.tilReisen, "knapp-hoved");
     knapp.type = "button";
     knapp.setAttribute("data-handling", "reise");
@@ -363,7 +365,7 @@
     if (iInnlegget) boks.appendChild(lagElement("p", iInnlegget.hvor, "mt-1 text-base"));
 
     var detaljer = lagElement("details", null, "mt-2 text-base");
-    detaljer.appendChild(lagElement("summary", T.radar.omTeknikken, "cursor-pointer font-semibold text-dempet"));
+    detaljer.appendChild(lagElement("summary", T.radar.omTeknikken, "flex min-h-11 cursor-pointer items-center font-semibold text-dempet"));
     detaljer.appendChild(lagElement("p", teknikk.forklaring, "mt-1 text-dempet"));
     boks.appendChild(detaljer);
     return boks;
@@ -375,6 +377,15 @@
   var SOYLEHOYDE = ["h-3", "h-12", "h-24", "h-32"];
 
   function visReise() {
+    try {
+      visReiseInnhold();
+    } catch (e) {
+      console.error(e);
+      visSkjerm("skjerm-innholdsfeil");
+    }
+  }
+
+  function visReiseInnhold() {
     var reise = R.feedreise(C, tilstand.svar);
     lagTidslinje(reise.tidslinje);
     lagKart(reise.teknikkPerFase);
@@ -490,10 +501,10 @@
     if (!steg) return;
     e.preventDefault();
     gaTil(tilstand.aktivt + steg, true);
-    // Fokus følger kortet, slik at Tab fortsetter derfra og ikke hopper tilbake til første innlegg.
+    // Fokus flyttes til selve kortet (ikke en knapp), slik at mellomrom fortsetter å bla videre
+    // og Tab havner på kortets egen knapp.
     var kort = $("feed").querySelectorAll("[data-indeks]")[tilstand.aktivt];
-    var knapp = kort && kort.querySelector("button");
-    if (knapp) knapp.focus({ preventScroll: true });
+    if (kort) kort.focus({ preventScroll: true });
   }
 
   // ---------- Oppstart ----------
@@ -540,17 +551,22 @@
       visSkjerm("skjerm-innholdsfeil");
       return;
     }
-    var feil = R.valider(C);
-    if (feil.length) {
-      visFeil(feil);
-      return;
+    try {
+      var feil = R.valider(C);
+      if (feil.length) {
+        visFeil(feil);
+        return;
+      }
+      T = C.tekster;
+      fyllInnTekster();
+      lagIntro();
+      settModus("alene");
+      kobleKnapper();
+      visSkjerm("skjerm-start");
+    } catch (e) {
+      console.error(e);
+      visSkjerm("skjerm-innholdsfeil");
     }
-    T = C.tekster;
-    fyllInnTekster();
-    lagIntro();
-    settModus("alene");
-    kobleKnapper();
-    visSkjerm("skjerm-start");
   }
 
   start();
