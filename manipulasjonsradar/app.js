@@ -423,7 +423,7 @@
     var hode = tabell.createTHead().insertRow();
     hode.appendChild(lagCelle("th", T.reise.kartTeknikk, "col", "text-left font-semibold text-dempet"));
     perFase.forEach(function (fase) {
-      hode.appendChild(lagCelle("th", fase.kort, "col", "px-1 font-semibold text-dempet"));
+      hode.appendChild(lagCelle("th", fase.kort, "col", "font-semibold text-dempet"));
     });
 
     var kropp = tabell.createTBody();
