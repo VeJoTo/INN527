@@ -235,6 +235,140 @@
 
   // ---------- Radaren ----------
 
+  // Ikonene står ved siden av teksten, så status aldri vises bare med farge.
+  var IKON = { funnet: "◉", oversett: "◌", ikkeHer: "–" };
+
+  function apneRadar(id, knapp) {
+    var innlegg = finnInnlegg(id);
+    tilstand.apentInnlegg = innlegg;
+    tilstand.apnetFra = knapp;
+    tilstand.utkast = R.tomGjetning();
+    $("radar-konto").textContent = innlegg.konto;
+    $("radar-snakk-tekst").textContent = innlegg.snakkOm;
+    // Er innlegget allerede skannet, vises resultatet. Man gjetter bare én gang.
+    if (tilstand.svar[innlegg.id]) visResultat();
+    else visGjett();
+    document.documentElement.classList.add("radar-apen");
+    $("radar").showModal();
+    $("radar-tittel").focus();
+  }
+
+  function lukkRadar() {
+    $("radar").close();
+  }
+
+  // Kjøres uansett hvordan panelet lukkes (knapp, Esc eller trykk utenfor).
+  function narRadarLukkes() {
+    document.documentElement.classList.remove("radar-apen");
+    tilstand.apentInnlegg = null;
+    if (tilstand.apnetFra) tilstand.apnetFra.focus({ preventScroll: true });
+    tilstand.apnetFra = null;
+  }
+
+  function visGjett() {
+    $("radar-tittel").textContent = T.radar.sporsmal;
+    $("radar-snakk").hidden = tilstand.modus !== "sammen";
+    $("radar-gjett").hidden = false;
+    $("radar-resultat").hidden = true;
+
+    var liste = $("radar-valg");
+    liste.textContent = "";
+    C.teknikker.forEach(function (t) {
+      liste.appendChild(lagValg(t.id, t.navn, t.kort));
+    });
+    liste.appendChild(lagValg("ingen", T.radar.ingen, null));
+    oppdaterValg();
+  }
+
+  function lagValg(id, navn, kort) {
+    var li = document.createElement("li");
+    var knapp = lagElement("button", null, "knapp-valg");
+    knapp.type = "button";
+    knapp.setAttribute("data-valg", id);
+    knapp.setAttribute("aria-pressed", "false");
+    var tekst = lagElement("span", null, "block");
+    tekst.appendChild(lagElement("span", navn, "block font-bold"));
+    if (kort) tekst.appendChild(lagElement("span", kort, "block text-base text-dempet"));
+    knapp.appendChild(tekst);
+    knapp.addEventListener("click", function () {
+      tilstand.utkast = R.veksleValg(tilstand.utkast, id);
+      oppdaterValg();
+    });
+    li.appendChild(knapp);
+    return li;
+  }
+
+  function oppdaterValg() {
+    var g = tilstand.utkast;
+    document.querySelectorAll("#radar-valg [data-valg]").forEach(function (knapp) {
+      var valg = knapp.getAttribute("data-valg");
+      var valgt = valg === "ingen" ? g.ingen : g.teknikker.indexOf(valg) !== -1;
+      knapp.setAttribute("aria-pressed", String(valgt));
+    });
+    $("radar-vis").disabled = !R.kanVise(g);
+  }
+
+  function visRadar() {
+    var innlegg = tilstand.apentInnlegg;
+    tilstand.svar[innlegg.id] = tilstand.utkast;
+    merkSomSkannet(innlegg.id);
+    visResultat();
+    $("radar-tittel").focus();
+  }
+
+  function merkSomSkannet(id) {
+    var knapp = $("feed").querySelector('[data-skann="' + id + '"]');
+    if (!knapp) return;
+    knapp.textContent = T.feed.skannet;
+    knapp.classList.add("er-skannet");
+  }
+
+  function visResultat() {
+    var innlegg = tilstand.apentInnlegg;
+    var vurdering = R.vurder(innlegg, tilstand.svar[innlegg.id]);
+    $("radar-tittel").textContent = T.radar.resultatTittel;
+    $("radar-snakk").hidden = true;
+    $("radar-gjett").hidden = true;
+    $("radar-resultat").hidden = false;
+
+    var funn = $("radar-funn");
+    funn.textContent = "";
+    if (innlegg.teknikker.length === 0) {
+      funn.appendChild(lagElement("p", vurdering.ingenRiktig ? T.radar.ingenRiktig : T.radar.ingenTeknikker, "rounded-2xl border-2 border-radar bg-natt p-4 font-bold"));
+    }
+    vurdering.funnet.forEach(function (id) { funn.appendChild(lagFunn("funnet", id, innlegg)); });
+    vurdering.oversett.forEach(function (id) { funn.appendChild(lagFunn("oversett", id, innlegg)); });
+    vurdering.ikkeHer.forEach(function (id) { funn.appendChild(lagFunn("ikkeHer", id, innlegg)); });
+
+    var notat = $("radar-notat");
+    notat.hidden = !innlegg.notat;
+    notat.textContent = innlegg.notat || "";
+  }
+
+  function lagFunn(status, id, innlegg) {
+    var teknikk = finnTeknikk(id);
+    var iInnlegget = innlegg.teknikker.filter(function (t) { return t.id === id; })[0];
+
+    var boks = lagElement("div", null, "funn");
+    boks.setAttribute("data-status", status);
+
+    var merke = lagElement("p", null, "funn-status");
+    var ikon = lagElement("span", IKON[status]);
+    ikon.setAttribute("aria-hidden", "true");
+    merke.appendChild(ikon);
+    merke.appendChild(document.createTextNode(T.radar[status]));
+    boks.appendChild(merke);
+
+    boks.appendChild(lagElement("h3", teknikk.navn, "text-xl font-bold"));
+    if (iInnlegget) boks.appendChild(lagElement("p", iInnlegget.hvor, "mt-1 text-base"));
+
+    var detaljer = lagElement("details", null, "mt-2 text-base");
+    detaljer.appendChild(lagElement("summary", T.radar.omTeknikken, "cursor-pointer font-semibold text-dempet"));
+    detaljer.appendChild(lagElement("p", teknikk.forklaring, "mt-1 text-dempet"));
+    boks.appendChild(detaljer);
+    return boks;
+  }
+
   // ---------- Feedreisen ----------
 
   // ---------- Tastatur ----------
@@ -252,6 +386,18 @@
     });
     $("intro-hopp").addEventListener("click", startFeed);
     $("intro-start").addEventListener("click", startFeed);
+    $("feed").addEventListener("click", function (e) {
+      var knapp = e.target.closest("[data-skann]");
+      if (knapp) apneRadar(knapp.getAttribute("data-skann"), knapp);
+    });
+    $("radar-vis").addEventListener("click", visRadar);
+    $("radar-lukk").addEventListener("click", lukkRadar);
+    $("radar-tilbake").addEventListener("click", lukkRadar);
+    $("radar").addEventListener("close", narRadarLukkes);
+    // Et trykk på den mørke bakgrunnen utenfor panelet lukker det.
+    $("radar").addEventListener("click", function (e) {
+      if (e.target === $("radar")) lukkRadar();
+    });
   }
 
   function start() {
