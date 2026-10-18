@@ -371,6 +371,112 @@
 
   // ---------- Feedreisen ----------
 
+  // Søylehøyde per intensitet (0–3). Står som hele klassenavn, så Tailwind finner dem.
+  var SOYLEHOYDE = ["h-3", "h-12", "h-24", "h-32"];
+
+  function visReise() {
+    var reise = R.feedreise(C, tilstand.svar);
+    lagTidslinje(reise.tidslinje);
+    lagKart(reise.teknikkPerFase);
+    lagTreff(reise);
+    $("reise-treff-tittel").textContent = tilstand.modus === "sammen" ? T.reise.treffTittelSammen : T.reise.treffTittel;
+    $("reise-ikke-skannet").textContent = reise.skannet > 0 && reise.ikkeSkannet > 0
+      ? R.fyllInn(T.reise.ikkeSkannet, { antall: reise.ikkeSkannet })
+      : "";
+
+    var refleksjon = $("reise-refleksjon");
+    refleksjon.textContent = "";
+    C.refleksjon.forEach(function (sporsmal) {
+      refleksjon.appendChild(lagElement("li", sporsmal, "rounded-2xl bg-flate p-4 font-semibold"));
+    });
+
+    visSkjerm("skjerm-reise");
+  }
+
+  function lagTidslinje(tidslinje) {
+    var liste = $("reise-tidslinje");
+    liste.textContent = "";
+    tidslinje.forEach(function (punkt, i) {
+      var li = lagElement("li", null, "flex flex-1 flex-col items-center justify-end gap-1");
+
+      var soyle = lagElement("span", null, "soyle w-full rounded-t-md " + SOYLEHOYDE[punkt.intensitet] + (punkt.kontroll ? " soyle-kontroll" : ""));
+      soyle.setAttribute("data-niva", punkt.intensitet);
+      soyle.setAttribute("aria-hidden", "true");
+
+      var nr = lagElement("span", String(i + 1), "text-xs tabular-nums text-dempet");
+      nr.setAttribute("aria-hidden", "true");
+
+      var beskrivelse = R.fyllInn(T.reise.soyleEtikett, { nr: i + 1, niva: T.reise.nivaer[punkt.intensitet] });
+      if (punkt.kontroll) beskrivelse += " (" + T.reise.kontrollKort + ")";
+
+      li.appendChild(soyle);
+      li.appendChild(nr);
+      li.appendChild(skjultTekst(beskrivelse));
+      liste.appendChild(li);
+    });
+  }
+
+  function lagKart(perFase) {
+    var tabell = $("reise-kart");
+    tabell.textContent = "";
+
+    var hode = tabell.createTHead().insertRow();
+    hode.appendChild(lagCelle("th", T.reise.kartTeknikk, "col", "text-left font-semibold text-dempet"));
+    perFase.forEach(function (fase) {
+      hode.appendChild(lagCelle("th", fase.kort, "col", "px-1 font-semibold text-dempet"));
+    });
+
+    var kropp = tabell.createTBody();
+    C.teknikker.forEach(function (t) {
+      var rad = kropp.insertRow();
+      rad.appendChild(lagCelle("th", t.navn, "row", "pr-2 text-left font-semibold"));
+      perFase.forEach(function (fase) {
+        var antall = fase.antall[t.id];
+        var celle = lagElement("td", null, "rounded-md bg-flate py-2 text-center " + (antall ? "text-press" : "text-kant"));
+        var prikker = lagElement("span", antall ? "●".repeat(antall) : "·");
+        prikker.setAttribute("aria-hidden", "true");
+        celle.appendChild(prikker);
+        celle.appendChild(skjultTekst(String(antall)));
+        rad.appendChild(celle);
+      });
+    });
+  }
+
+  function lagCelle(tag, tekst, scope, klasse) {
+    var celle = lagElement(tag, tekst, klasse);
+    celle.setAttribute("scope", scope);
+    return celle;
+  }
+
+  function lagTreff(reise) {
+    var liste = $("reise-treff");
+    liste.textContent = "";
+
+    // Ingenting skannet: ingen «0 av 0», bare et spørsmål til samtalen.
+    if (reise.skannet === 0) {
+      liste.appendChild(lagElement("li", T.reise.ingenSkannet, "rounded-2xl bg-flate p-4"));
+      return;
+    }
+
+    reise.treffPerTeknikk.forEach(function (t) {
+      var li = lagElement("li", null, "rounded-2xl bg-flate p-4");
+      var topp = lagElement("div", null, "flex flex-wrap items-baseline justify-between gap-x-3");
+      topp.appendChild(lagElement("span", t.navn, "font-bold"));
+      topp.appendChild(lagElement("span", t.av ? R.fyllInn(T.reise.treffTekst, { sett: t.sett, av: t.av }) : T.reise.ikkeMedSkannet, "text-base text-dempet"));
+      li.appendChild(topp);
+
+      if (t.av) {
+        var spor = lagElement("div", null, "mt-2 h-2 overflow-hidden rounded-full bg-kant");
+        spor.setAttribute("aria-hidden", "true");
+        var fyll = lagElement("div", null, "h-full rounded-full bg-radar");
+        fyll.style.width = Math.round((t.sett / t.av) * 100) + "%";
+        spor.appendChild(fyll);
+        li.appendChild(spor);
+      }
+      liste.appendChild(li);
+    });
+  }
+
   // ---------- Tastatur ----------
 
   // ---------- Oppstart ----------
@@ -399,6 +505,14 @@
       var r = $("radar").getBoundingClientRect();
       var utenfor = e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
       if (e.target === $("radar") && utenfor) lukkRadar();
+    });
+    $("feed").addEventListener("click", function (e) {
+      if (e.target.closest('[data-handling="reise"]')) visReise();
+    });
+    $("reise-igjen").addEventListener("click", startFeed);
+    $("reise-ny").addEventListener("click", function () {
+      settModus("alene");
+      visSkjerm("skjerm-start");
     });
   }
 
