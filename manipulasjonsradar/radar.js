@@ -127,7 +127,115 @@
     return feil;
   }
 
+  // ---------- Gjetning ----------
+  // En gjetning ser slik ut: { ingen: false, teknikker: ["falsk-hast"] }
+
+  function tomGjetning() {
+    return { ingen: false, teknikker: [] };
+  }
+
+  // Slår et valg av eller på. «Ingen av disse» og teknikker utelukker hverandre.
+  function veksleValg(g, valg) {
+    if (valg === "ingen") return g.ingen ? tomGjetning() : { ingen: true, teknikker: [] };
+    var harDen = g.teknikker.indexOf(valg) !== -1;
+    return {
+      ingen: false,
+      teknikker: harDen
+        ? g.teknikker.filter(function (id) { return id !== valg; })
+        : g.teknikker.concat([valg])
+    };
+  }
+
+  function kanVise(g) {
+    return !!g && (g.ingen || g.teknikker.length > 0);
+  }
+
+  // Sammenligner gjetningen med teknikkene innlegget faktisk bruker.
+  function vurder(innlegg, g) {
+    var fasit = innlegg.teknikker.map(function (t) { return t.id; });
+    var gjettet = g.ingen ? [] : g.teknikker;
+    return {
+      funnet: fasit.filter(function (id) { return gjettet.indexOf(id) !== -1; }),
+      oversett: fasit.filter(function (id) { return gjettet.indexOf(id) === -1; }),
+      ikkeHer: gjettet.filter(function (id) { return fasit.indexOf(id) === -1; }),
+      ingenRiktig: g.ingen && fasit.length === 0
+    };
+  }
+
+  // ---------- Feedreisen ----------
+  // svar: { innleggId: gjetning }. Innlegg som mangler i svar, er ikke skannet.
+
+  function feedreise(c, svar) {
+    var tidslinje = c.innlegg.map(function (p) {
+      return {
+        id: p.id,
+        fase: p.fase,
+        intensitet: p.intensitet,
+        kontroll: p.kontroll === true,
+        skannet: !!svar[p.id],
+        antallTeknikker: p.teknikker.length
+      };
+    });
+
+    var teknikkPerFase = c.faser.map(function (f) {
+      var antall = {};
+      c.teknikker.forEach(function (t) { antall[t.id] = 0; });
+      c.innlegg.forEach(function (p) {
+        if (p.fase !== f.nr) return;
+        p.teknikker.forEach(function (t) { antall[t.id] += 1; });
+      });
+      return { nr: f.nr, navn: f.navn, kort: f.kort, antall: antall };
+    });
+
+    var treffPerTeknikk = c.teknikker.map(function (t) {
+      var sett = 0;
+      var av = 0;
+      c.innlegg.forEach(function (p) {
+        var g = svar[p.id];
+        if (!g) return;
+        if (!p.teknikker.some(function (x) { return x.id === t.id; })) return;
+        av += 1;
+        if (vurder(p, g).funnet.indexOf(t.id) !== -1) sett += 1;
+      });
+      return { id: t.id, navn: t.navn, sett: sett, av: av };
+    });
+
+    var skannet = c.innlegg.filter(function (p) { return !!svar[p.id]; }).length;
+
+    return {
+      tidslinje: tidslinje,
+      teknikkPerFase: teknikkPerFase,
+      treffPerTeknikk: treffPerTeknikk,
+      skannet: skannet,
+      ikkeSkannet: c.innlegg.length - skannet
+    };
+  }
+
+  // ---------- Tekst og tall ----------
+
+  // fyllInn("{nr} av {totalt}", { nr: 4, totalt: 12 }) → "4 av 12"
+  function fyllInn(mal, verdier) {
+    return mal.replace(/\{(\w+)\}/g, function (hele, navn) {
+      return Object.prototype.hasOwnProperty.call(verdier, navn) ? String(verdier[navn]) : hele;
+    });
+  }
+
+  // Likes og kommentarer slik feeder viser dem: 1840 → "1,8k"
+  function kortTall(n) {
+    if (n < 1000) return String(n);
+    if (n < 10000) return String(Math.round(n / 100) / 10).replace(".", ",") + "k";
+    if (n < 1000000) return Math.round(n / 1000) + "k";
+    return String(Math.round(n / 100000) / 10).replace(".", ",") + " mill.";
+  }
+
   return {
-    valider: valider
+    valider: valider,
+    tomGjetning: tomGjetning,
+    veksleValg: veksleValg,
+    kanVise: kanVise,
+    vurder: vurder,
+    feedreise: feedreise,
+    fyllInn: fyllInn,
+    kortTall: kortTall
   };
 });

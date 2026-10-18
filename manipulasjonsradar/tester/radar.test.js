@@ -119,3 +119,118 @@ test("valider: tomme lister på toppnivå", () => {
     "«refleksjon» må være en liste med minst ett spørsmål."
   ]);
 });
+
+// ---------- Gjetning ----------
+
+test("veksleValg: teknikker legges til og fjernes", () => {
+  let g = Radar.tomGjetning();
+  g = Radar.veksleValg(g, "a");
+  g = Radar.veksleValg(g, "b");
+  assert.deepEqual(g, { ingen: false, teknikker: ["a", "b"] });
+  g = Radar.veksleValg(g, "a");
+  assert.deepEqual(g, { ingen: false, teknikker: ["b"] });
+});
+
+test("veksleValg: «ingen» fjerner teknikker, og en teknikk fjerner «ingen»", () => {
+  let g = Radar.veksleValg(Radar.veksleValg(Radar.tomGjetning(), "a"), "ingen");
+  assert.deepEqual(g, { ingen: true, teknikker: [] });
+  g = Radar.veksleValg(g, "b");
+  assert.deepEqual(g, { ingen: false, teknikker: ["b"] });
+  assert.deepEqual(Radar.veksleValg({ ingen: true, teknikker: [] }, "ingen"), Radar.tomGjetning());
+});
+
+test("veksleValg: endrer ikke den gamle gjetningen", () => {
+  const g = Radar.tomGjetning();
+  Radar.veksleValg(g, "a");
+  assert.deepEqual(g, { ingen: false, teknikker: [] });
+});
+
+test("kanVise", () => {
+  assert.equal(Radar.kanVise(Radar.tomGjetning()), false);
+  assert.equal(Radar.kanVise({ ingen: true, teknikker: [] }), true);
+  assert.equal(Radar.kanVise({ ingen: false, teknikker: ["a"] }), true);
+});
+
+// ---------- Vurdering ----------
+
+test("vurder: funnet, oversett og ikke her", () => {
+  const p2 = lagInnhold().innlegg[1]; // teknikker a og b
+  assert.deepEqual(Radar.vurder(p2, { ingen: false, teknikker: ["c", "b"] }), {
+    funnet: ["b"], oversett: ["a"], ikkeHer: ["c"], ingenRiktig: false
+  });
+});
+
+test("vurder: «ingen» på et innlegg uten teknikker", () => {
+  const p1 = lagInnhold().innlegg[0];
+  assert.deepEqual(Radar.vurder(p1, { ingen: true, teknikker: [] }), {
+    funnet: [], oversett: [], ikkeHer: [], ingenRiktig: true
+  });
+});
+
+test("vurder: «ingen» på et innlegg med teknikker gir bare oversette", () => {
+  const p2 = lagInnhold().innlegg[1];
+  assert.deepEqual(Radar.vurder(p2, { ingen: true, teknikker: [] }), {
+    funnet: [], oversett: ["a", "b"], ikkeHer: [], ingenRiktig: false
+  });
+});
+
+// ---------- Feedreisen ----------
+
+test("feedreise: tidslinje og teknikker per fase", () => {
+  const r = Radar.feedreise(lagInnhold(), {});
+  assert.deepEqual(r.tidslinje, [
+    { id: "p1", fase: 1, intensitet: 0, kontroll: false, skannet: false, antallTeknikker: 0 },
+    { id: "p2", fase: 2, intensitet: 2, kontroll: false, skannet: false, antallTeknikker: 2 },
+    { id: "p3", fase: 2, intensitet: 0, kontroll: true, skannet: false, antallTeknikker: 0 }
+  ]);
+  assert.deepEqual(r.teknikkPerFase, [
+    { nr: 1, navn: "En", kort: "En", antall: { a: 0, b: 0 } },
+    { nr: 2, navn: "To", kort: "To", antall: { a: 1, b: 1 } }
+  ]);
+});
+
+test("feedreise: ingen skannet gir av = 0 overalt, ikke NaN", () => {
+  const r = Radar.feedreise(lagInnhold(), {});
+  assert.equal(r.skannet, 0);
+  assert.equal(r.ikkeSkannet, 3);
+  assert.deepEqual(r.treffPerTeknikk, [
+    { id: "a", navn: "A", sett: 0, av: 0 },
+    { id: "b", navn: "B", sett: 0, av: 0 }
+  ]);
+});
+
+test("feedreise: treff teller bare skannede innlegg", () => {
+  const c = lagInnhold();
+  c.innlegg.push(lagInnlegg({ id: "p4", fase: 2, intensitet: 3, teknikker: [{ id: "a", hvor: "x" }] }));
+  const r = Radar.feedreise(c, {
+    p1: { ingen: true, teknikker: [] },
+    p2: { ingen: false, teknikker: ["a"] }
+    // p3 og p4 er ikke skannet
+  });
+  assert.equal(r.skannet, 2);
+  assert.equal(r.ikkeSkannet, 2);
+  assert.deepEqual(r.treffPerTeknikk, [
+    { id: "a", navn: "A", sett: 1, av: 1 },
+    { id: "b", navn: "B", sett: 0, av: 1 }
+  ]);
+  assert.equal(r.tidslinje[1].skannet, true);
+  assert.equal(r.tidslinje[3].skannet, false);
+});
+
+// ---------- Tekst og tall ----------
+
+test("fyllInn", () => {
+  assert.equal(Radar.fyllInn("{nr} av {totalt}", { nr: 4, totalt: 12 }), "4 av 12");
+  assert.equal(Radar.fyllInn("så {sett} av {av}", { sett: 0, av: 3 }), "så 0 av 3");
+  assert.equal(Radar.fyllInn("{ukjent} står", {}), "{ukjent} står");
+});
+
+test("kortTall", () => {
+  assert.equal(Radar.kortTall(0), "0");
+  assert.equal(Radar.kortTall(999), "999");
+  assert.equal(Radar.kortTall(1000), "1k");
+  assert.equal(Radar.kortTall(1840), "1,8k");
+  assert.equal(Radar.kortTall(26700), "27k");
+  assert.equal(Radar.kortTall(168000), "168k");
+  assert.equal(Radar.kortTall(1200000), "1,2 mill.");
+});
