@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Guidede spørsmål som hjelper deg å se nærmere på innhold du møter på sosiale medier.">
+  <meta name="theme-color" content="#0f1b3d">
+  <title>Trykk pause</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="ikoner/ikon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="ikoner/ikon-maskerbar-512.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-dvh bg-natt font-sans text-lg leading-relaxed text-tekst antialiased">
+  <!--
+    Alle synlige tekster hentes fra content.js.
+    data-tekst="start.tittel" betyr: sett inn CONTENT.start.tittel her.
+    Bare én <section> vises om gangen (de andre har attributtet hidden).
+    Klassene (f.eks. "text-3xl") er Tailwind. Kjør ./bygg-css.sh etter at du endrer dem.
+  -->
+  <main id="app" class="mx-auto max-w-xl px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))]">
+
+    <!-- 1. Startside -->
+    <section id="skjerm-start" class="skjerm flex min-h-[calc(100dvh-4.5rem)] flex-col justify-between gap-10">
+      <div class="pt-6">
+        <div class="mb-10 flex gap-3" aria-hidden="true">
+          <span class="block h-24 w-7 rounded-lg bg-signal"></span>
+          <span class="block h-24 w-7 rounded-lg bg-signal"></span>
+        </div>
+        <h1 tabindex="-1" class="display mb-6 text-6xl" data-tekst="start.tittel"></h1>
+        <p class="max-w-prose text-xl text-dempet" data-tekst="start.tekst"></p>
+      </div>
+      <div>
+        <button type="button" class="knapp-hoved" id="start-knapp" data-tekst="start.knapp"></button>
+        <p class="mt-4 text-base text-dempet" data-tekst="start.personvern"></p>
+      </div>
+    </section>
+
+    <!-- 2. Beskriv innholdet -->
+    <section id="skjerm-beskriv" class="skjerm" hidden>
+      <h1 tabindex="-1" class="display mb-8 text-4xl" data-tekst="beskriv.tittel"></h1>
+      <form id="beskriv-skjema" class="space-y-6" novalidate>
+        <div>
+          <label for="beskrivelse" class="mb-1 block font-bold" data-tekst="beskriv.label"></label>
+          <p id="beskrivelse-hjelp" class="mb-3 text-base text-dempet" data-tekst="beskriv.hjelpetekst"></p>
+          <textarea id="beskrivelse" rows="3" class="felt" aria-describedby="beskrivelse-hjelp" autocomplete="off"></textarea>
+        </div>
+        <div>
+          <label for="lenke" class="mb-1 block font-bold" data-tekst="video.lenkeLabel"></label>
+          <p id="lenke-hjelp" class="mb-3 text-base text-dempet" data-tekst="video.lenkeHjelp"></p>
+          <input id="lenke" type="text" inputmode="url" class="felt" aria-describedby="lenke-hjelp" autocomplete="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <button type="submit" class="knapp-hoved" data-tekst="beskriv.knapp"></button>
+      </form>
+
+      <h2 class="mb-4 mt-12 text-xl font-bold" data-tekst="video.eksemplerTittel"></h2>
+      <ul id="eksempler" class="space-y-3"></ul>
+
+      <button type="button" class="knapp-tekst mt-10" id="beskriv-tilbake" data-tekst="beskriv.tilbake"></button>
+    </section>
+
+    <!-- 3. «Analyserer …» -->
+    <section id="skjerm-analyserer" class="skjerm flex min-h-[70dvh] flex-col items-center justify-center text-center" hidden>
+      <div class="relative mb-10 aspect-[9/16] w-36 overflow-hidden rounded-3xl border-2 border-kant bg-flate" aria-hidden="true">
+        <div class="absolute inset-x-6 top-10 h-2 rounded bg-kant"></div>
+        <div class="absolute left-6 top-16 h-2 w-12 rounded bg-kant"></div>
+        <div class="absolute inset-x-6 bottom-10 h-2 rounded bg-kant"></div>
+        <div class="skannelinje absolute inset-x-0 h-1 bg-signal shadow-[0_0_18px_4px_rgba(255,210,63,0.55)]"></div>
+      </div>
+      <h1 tabindex="-1" class="display text-3xl" data-tekst="video.analyserer"></h1>
+    </section>
+
+    <!-- 4. Resultatet av den simulerte analysen (fylles inn av app.js) -->
+    <section id="skjerm-analyse" class="skjerm" hidden>
+      <h1 tabindex="-1" class="display mb-4 text-4xl" data-tekst="video.resultatTittel"></h1>
+      <p id="analyse-video" class="mb-4 text-xl font-bold"></p>
+      <p class="demo mb-6 text-base text-dempet">
+        <span class="demo-merke mr-2" data-tekst="video.demoMerke"></span>
+        <span data-tekst="video.demoForklaring"></span>
+      </p>
+      <p class="mb-8 text-dempet" data-tekst="video.resultatIntro"></p>
+      <div id="analyse-liste" class="mb-10 space-y-8"></div>
+      <button type="button" class="knapp-hoved" id="analyse-videre" data-tekst="video.resultatKnapp"></button>
+    </section>
+
+    <!-- 5. Spørsmål (innholdet byttes ut for hvert spørsmål) -->
+    <section id="skjerm-sporsmal" class="skjerm" hidden>
+      <!-- Fremdriftslinja: ett felt per tema, fylles inn av app.js -->
+      <div id="tidslinje" class="mb-8 flex gap-1.5" aria-hidden="true"></div>
+
+      <h1 tabindex="-1" id="sporsmal-overskrift" class="mb-8">
+        <span class="mb-3 flex items-baseline justify-between gap-4 text-base">
+          <span id="sporsmal-tema" class="font-bold text-(--tema)"></span>
+          <span id="sporsmal-fremdrift" class="font-normal text-dempet"></span>
+        </span>
+        <span id="sporsmal-tekst" class="display block text-3xl"></span>
+      </h1>
+
+      <div id="hint" class="mb-8 rounded-r-2xl border-l-4 border-signal bg-flate px-5 py-4" hidden>
+        <p class="mb-1 flex flex-wrap items-center gap-2 text-base font-bold">
+          <span data-tekst="video.hintLabel"></span>
+          <span class="demo-merke" data-tekst="video.demoMerke"></span>
+        </p>
+        <p id="hint-tekst"></p>
+      </div>
+
+      <div class="mb-8 space-y-3" role="group" aria-labelledby="sporsmal-tekst">
+        <button type="button" class="knapp-svar" data-svar="ja" data-tekst="sporsmalSkjerm.svar.ja"></button>
+        <button type="button" class="knapp-svar" data-svar="nei" data-tekst="sporsmalSkjerm.svar.nei"></button>
+        <button type="button" class="knapp-svar" data-svar="vetIkke" data-tekst="sporsmalSkjerm.svar.vetIkke"></button>
+      </div>
+
+      <details id="hvorfor" class="group mb-8 rounded-2xl bg-flate">
+        <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 font-bold [&::-webkit-details-marker]:hidden">
+          <span data-tekst="sporsmalSkjerm.hvorforLabel"></span>
+          <span class="text-2xl leading-none text-signal transition-transform group-open:rotate-45" aria-hidden="true">+</span>
+        </summary>
+        <p id="hvorfor-tekst" class="px-5 pb-5 text-dempet"></p>
+      </details>
+
+      <button type="button" class="knapp-tekst" id="sporsmal-tilbake" data-tekst="sporsmalSkjerm.tilbake"></button>
+    </section>
+
+    <!-- 6. Oppsummering (listene fylles inn av app.js) -->
+    <section id="skjerm-oppsummering" class="skjerm" hidden>
+      <h1 tabindex="-1" class="display mb-4 text-5xl" data-tekst="oppsummering.tittel"></h1>
+      <p class="mb-8 text-dempet" data-tekst="oppsummering.intro"></p>
+
+      <div id="du-sjekket" class="mb-10 rounded-2xl bg-flate px-5 py-4" hidden>
+        <p class="text-base font-bold text-dempet" data-tekst="oppsummering.duSjekket"></p>
+        <ul id="du-sjekket-liste" class="mt-1 space-y-1 break-words text-xl font-bold"></ul>
+      </div>
+
+      <h2 class="display mb-6 text-3xl" data-tekst="oppsummering.signalerTittel"></h2>
+      <div id="signaler" class="space-y-8"></div>
+
+      <div id="sjekk-naermere" class="mt-12" hidden>
+        <h2 class="display mb-3 text-2xl" data-tekst="oppsummering.sjekkNaermereTittel"></h2>
+        <p class="mb-4 text-dempet" data-tekst="oppsummering.sjekkNaermereIntro"></p>
+        <ul id="sjekk-naermere-liste" class="list-disc space-y-2 pl-6 marker:text-signal"></ul>
+      </div>
+
+      <div class="my-12 border-l-[6px] border-signal pl-5">
+        <h2 class="mb-2 text-base font-bold text-signal" data-tekst="oppsummering.refleksjonTittel"></h2>
+        <p class="text-2xl font-semibold leading-snug" data-tekst="oppsummering.refleksjon"></p>
+      </div>
+
+      <h2 class="mb-3 text-xl font-bold" data-tekst="oppsummering.lesMerTittel"></h2>
+      <ul id="lenker" class="mb-12 space-y-3"></ul>
+
+      <button type="button" class="knapp-hoved" id="start-pa-nytt" data-tekst="oppsummering.startPaNytt"></button>
+    </section>
+
+  </main>
+
+  <script src="content.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

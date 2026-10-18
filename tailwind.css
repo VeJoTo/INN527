@@ -1,0 +1,117 @@
+/*
+ * UTSEENDE – kildefil for Tailwind
+ * --------------------------------
+ * Ikke rediger style.css direkte. Den lages fra denne fila med:
+ *   ./bygg-css.sh
+ *
+ * Det meste av utseendet står som Tailwind-klasser direkte i index.html
+ * og app.js. Her ligger farger, skrift og noen få gjenbrukte komponenter.
+ */
+
+@import "tailwindcss" source(none);
+@source "./index.html";
+@source "./app.js";
+
+/* Skrifttypen ligger i prosjektet, så ingenting hentes fra andre nettsteder. */
+@font-face {
+  font-family: "Archivo";
+  src: url("fonter/archivo.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-natt: #0f1b3d;      /* bakgrunn */
+  --color-flate: #182a5c;     /* bokser og knapper */
+  --color-flate-lys: #22397a; /* hover */
+  --color-kant: #3a5196;
+  --color-tekst: #f2f4fa;
+  --color-dempet: #b4bedb;
+  --color-signal: #ffd23f;    /* hovedknapper, pausesymbolet, fokus */
+}
+
+@layer base {
+  html {
+    background: var(--color-natt);
+    color: var(--color-tekst);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-signal);
+    outline-offset: 3px;
+  }
+
+  /* Overskrifter får fokus av skriptet (for skjermlesere), men trenger ingen ring. */
+  [tabindex="-1"]:focus {
+    outline: none;
+  }
+
+  ::selection {
+    background: var(--color-signal);
+    color: var(--color-natt);
+  }
+}
+
+@layer components {
+  /* Store, brede titler */
+  .display {
+    font-stretch: 125%;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .knapp-hoved {
+    @apply block w-full min-h-14 rounded-2xl bg-signal px-6 py-4 text-lg font-bold text-natt;
+    @apply cursor-pointer transition-transform active:scale-[0.98];
+  }
+
+  .knapp-svar {
+    @apply flex w-full min-h-16 items-center justify-between rounded-2xl border-2 border-kant bg-flate px-5 py-4;
+    @apply cursor-pointer text-left text-xl font-bold transition-colors hover:bg-flate-lys;
+  }
+
+  /* Valgt svar får temaets farge (--tema settes av app.js) */
+  .knapp-svar[aria-pressed="true"] {
+    border-color: var(--tema);
+    background: color-mix(in srgb, var(--tema) 18%, var(--color-flate));
+  }
+  .knapp-svar[aria-pressed="true"]::after {
+    content: "✓";                /* reserve for eldre nettlesere */
+    content: "✓" / "";           /* skjermlesere hopper over haken */
+    color: var(--tema);
+  }
+
+  .knapp-tekst {
+    @apply min-h-12 cursor-pointer px-1 font-semibold text-dempet underline underline-offset-4 hover:text-tekst;
+  }
+
+  .felt {
+    @apply w-full rounded-2xl border-2 border-kant bg-flate px-4 py-3 text-lg text-tekst placeholder:text-dempet;
+  }
+
+  .demo-merke {
+    @apply inline-block rounded-full bg-signal px-2.5 py-0.5 text-sm font-bold text-natt;
+  }
+}
+
+/* «Analyserer …»: en linje som skanner over videorammen.
+   Står stille for brukere som har slått av animasjoner. */
+@keyframes skann {
+  from { top: 0; }
+  to { top: calc(100% - 4px); }
+}
+.skannelinje {
+  animation: skann 1s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skannelinje {
+    animation: none;
+    top: 50%;
+  }
+}
