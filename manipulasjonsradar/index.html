@@ -117,24 +117,24 @@
 
     <h2 class="mb-2 text-2xl font-bold" data-tekst="reise.tidslinjeTittel"></h2>
     <p class="mb-4 text-base text-dempet" data-tekst="reise.tidslinjeTekst"></p>
-    <ol id="reise-tidslinje" class="mb-3 flex h-40 items-end gap-1.5"></ol>
+    <ol id="reise-tidslinje" role="list" class="mb-3 flex h-40 items-end gap-1.5"></ol>
     <p class="mb-12 flex items-center gap-2 text-sm text-dempet">
       <span class="soyle soyle-kontroll inline-block h-3 w-5 rounded-sm" aria-hidden="true"></span>
       <span data-tekst="reise.kontrollForklaring"></span>
     </p>
 
-    <h2 class="mb-2 text-2xl font-bold" data-tekst="reise.kartTittel"></h2>
+    <h2 id="reise-kart-tittel" class="mb-2 text-2xl font-bold" data-tekst="reise.kartTittel"></h2>
     <p class="mb-4 text-base text-dempet" data-tekst="reise.kartTekst"></p>
     <div class="mb-12 overflow-x-auto">
-      <table id="reise-kart" class="w-full border-separate border-spacing-1 text-sm"></table>
+      <table id="reise-kart" aria-labelledby="reise-kart-tittel" class="w-full border-separate border-spacing-1 text-sm"></table>
     </div>
 
     <h2 id="reise-treff-tittel" class="mb-4 text-2xl font-bold"></h2>
-    <ul id="reise-treff" class="mb-3 space-y-3"></ul>
+    <ul id="reise-treff" role="list" class="mb-3 space-y-3"></ul>
     <p id="reise-ikke-skannet" class="mb-12 text-base text-dempet"></p>
 
     <h2 class="mb-4 text-2xl font-bold" data-tekst="reise.refleksjonTittel"></h2>
-    <ul id="reise-refleksjon" class="mb-12 space-y-3"></ul>
+    <ul id="reise-refleksjon" role="list" class="mb-12 space-y-3"></ul>
 
     <div class="space-y-3">
       <button type="button" id="reise-igjen" class="knapp-hoved" data-tekst="reise.igjen"></button>
