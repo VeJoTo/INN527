@@ -75,6 +75,12 @@
     line-height: 1.05;
     letter-spacing: -0.01em;
     text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+
+  /* Lange ettords-titler («Manipulasjonsradar», «Feedreisen») må få plass på smale mobiler. */
+  .display-stor {
+    font-size: min(3rem, 7vw);
   }
 
   /* Vanlige tekstskjermer (start, intro, feedreise) */

@@ -490,6 +490,10 @@
     if (!steg) return;
     e.preventDefault();
     gaTil(tilstand.aktivt + steg, true);
+    // Fokus følger kortet, slik at Tab fortsetter derfra og ikke hopper tilbake til første innlegg.
+    var kort = $("feed").querySelectorAll("[data-indeks]")[tilstand.aktivt];
+    var knapp = kort && kort.querySelector("button");
+    if (knapp) knapp.focus({ preventScroll: true });
   }
 
   // ---------- Oppstart ----------
