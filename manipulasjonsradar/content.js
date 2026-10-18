@@ -66,7 +66,7 @@ window.CONTENT = {
       skann: "Skann med radaren",
       skannet: "Se radaren igjen",
       sluttTittel: "Det var feeden.",
-      sluttTekst: "Tolv innlegg. Hvordan endret de seg fra første til siste?",
+      sluttTekst: "{totalt} innlegg. Hvordan endret de seg fra første til siste?",
       tilReisen: "Se feedreisen"
     },
     radar: {
@@ -222,7 +222,7 @@ window.CONTENT = {
       konto: "@ulvementalitet",
       skjermtekst: "Ingen kommer til å redde deg.\n\nIkke familien. Ikke vennene. Ikke samfunnet.",
       bildetekst: "Jo før du skjønner at du står alene, jo før blir du sterk.",
-      hashtags: ["mindset", "disiplin", "alene"],
+      hashtags: ["ulvekoden", "disiplin", "alene"],
       likes: 18400,
       kommentarer: 612,
       utvalgteKommentarer: ["trengte å høre dette i dag", "så sant. folk bryr seg bare om seg selv"],
@@ -230,7 +230,7 @@ window.CONTENT = {
       teknikker: [
         {
           id: "sterke-folelser",
-          hvor: "Innlegget spiller på ensomhet og en følelse av å være sviktet («ikke familien, ikke vennene») for å vekke en sterk reaksjon."
+          hvor: "Innlegget spiller på ensomhet og en følelse av å være sviktet («Ikke familien. Ikke vennene.») for å vekke en sterk reaksjon."
         }
       ],
       snakkOm: "Hvorfor tror dere et budskap som dette treffer mange?"
@@ -242,7 +242,7 @@ window.CONTENT = {
       konto: "@toppform.mindset",
       skjermtekst: "90 % av gutta gir opp før de er 25.\n\nEr du en av dem?",
       bildetekst: "Klokka tikker. Hver dag du venter, er en dag de andre går forbi deg. Start i dag – ikke i morgen.",
-      hashtags: ["hustle", "mindset", "gutta"],
+      hashtags: ["jobbhardere", "toppformkoden", "gutta"],
       likes: 26700,
       kommentarer: 940,
       utvalgteKommentarer: ["25 er snart 😬", "hvor kommer 90 % fra?"],
@@ -266,7 +266,7 @@ window.CONTENT = {
       konto: "@sigma.memes.no",
       skjermtekst: "Han: blir dumpet\nOgså han: åpner Excel og legger en 10-årsplan 🗿",
       bildetekst: "Følelser er for de svake 😂 (bare tull da)",
-      hashtags: ["sigma", "meme", "grindset"],
+      hashtags: ["steinansikt", "meme", "excelplanen"],
       likes: 41200,
       kommentarer: 1530,
       utvalgteKommentarer: ["🗿🗿🗿", "det verste er at dette er meg"],
@@ -286,7 +286,7 @@ window.CONTENT = {
       konto: "@vaakne.gutter",
       skjermtekst: "Det skolen ALDRI kommer til å lære deg 🤫",
       bildetekst: "De vil ha deg lydig og stille. Derfor er det ingen lærer som forteller deg dette. Del 1 av 5 – følg for resten.",
-      hashtags: ["sannheten", "våkne", "skolen"],
+      hashtags: ["detdeikkesier", "åpneøya", "skolen"],
       likes: 58300,
       kommentarer: 2210,
       utvalgteKommentarer: ["hvorfor har ingen sagt dette før?", "lærerne mine er sånn fr"],
@@ -294,7 +294,7 @@ window.CONTENT = {
       teknikker: [
         {
           id: "skjuler-sannheten",
-          hvor: "«Det skolen aldri kommer til å lære deg» og «ingen lærer forteller deg dette» antyder at noen holder noe skjult med vilje."
+          hvor: "«Det skolen aldri kommer til å lære deg» og «er det ingen lærer som forteller deg dette» antyder at noen holder noe skjult med vilje."
         }
       ],
       snakkOm: "Hvorfor er «det ingen vil fortelle deg» så fristende å klikke på?"
@@ -321,9 +321,9 @@ window.CONTENT = {
       fase: 3,
       intensitet: 2,
       konto: "@sannhetenomgutta",
-      skjermtekst: "Hvorfor sliter unge menn?\n\nSvaret er enkelt: DE har ødelagt alt for oss.",
-      bildetekst: "Jobber, boliger, respekt – alt er tatt fra oss. Og de ler av deg mens det skjer. Er du ikke sint, følger du ikke med.",
-      hashtags: ["ungemenn", "sannheten", "ingenbryrseg"],
+      skjermtekst: "Hvorfor sliter unge menn?\n\nSvaret er enkelt: DE har ødelagt alt.",
+      bildetekst: "Jobber, boliger, respekt – alt er tatt fra unge menn. Og de ler mens det skjer. Er du ikke sint, følger du ikke med.",
+      hashtags: ["guttaidag", "hvemfårskylda", "ingenbryrseg"],
       likes: 74100,
       kommentarer: 3880,
       utvalgteKommentarer: ["endelig noen som sier det", "hvem er «de» egentlig?"],
@@ -335,7 +335,7 @@ window.CONTENT = {
         },
         {
           id: "sterke-folelser",
-          hvor: "«De ler av deg» og «er du ikke sint, følger du ikke med» skal vekke sinne og ydmykelse."
+          hvor: "«De ler mens det skjer» og «er du ikke sint, følger du ikke med» skal vekke sinne og ydmykelse."
         }
       ],
       snakkOm: "Hva skjer når et stort problem får én enkel forklaring?"
@@ -348,7 +348,7 @@ window.CONTENT = {
       konto: "@minmening.vgs",
       skjermtekst: "Mener: Bussen til skolen burde vært gratis for alle elever.",
       bildetekst:
-        "Mange bruker over 1000 kr i måneden på buss. Motargumentet er at det koster kommunen mye. " +
+        "Busskortet mitt koster meg mye hver måned. Motargumentet er at det koster fylkeskommunen mye. " +
         "Jeg mener likevel det er verdt det. Enig eller uenig?",
       hashtags: ["mening", "kollektiv", "skole"],
       likes: 2300,
@@ -386,7 +386,7 @@ window.CONTENT = {
         },
         {
           id: "syndebukk",
-          hvor: "«Alt som har gått galt? Takk til de der» gir en vag gruppe skylden uten å si hva de har gjort."
+          hvor: "«Alt som har gått galt de siste årene? Takk til de der» gir en vag gruppe skylden uten å si hva de har gjort."
         }
       ],
       snakkOm: "Hvorfor tror dere det er vanskelig å si imot en meme?"
@@ -400,7 +400,7 @@ window.CONTENT = {
       bildetekst:
         "Mediene vil aldri vise deg dette. De vet at hvis nok av oss ser det, er det over for dem. " +
         "Du har kanskje bare timer på deg. Vi eller dem – du bestemmer.",
-      hashtags: ["delnå", "sannheten", "våkneopp"],
+      hashtags: ["delførslett", "detdeskjuler", "bareåpneøya"],
       likes: 168000,
       kommentarer: 9900,
       utvalgteKommentarer: ["delt ✅", "hva er det egentlig som er i videoen?"],

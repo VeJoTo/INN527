@@ -8,8 +8,8 @@ Prototypen er en probe i et living lab-prosjekt: målet er å lære av hvordan e
 reagerer, ikke å bevise at verktøyet virker. Se `docs/specs/` for hele designet.
 
 Ren HTML, CSS og JavaScript, med Tailwind for utseendet. Ingen backend, ingen cookies,
-ingen analyseverktøy. Alt eleven velger ligger bare i nettleserens minne og forsvinner
-når siden lukkes eller lastes på nytt.
+ingen analyseverktøy. Siden lagrer ingenting om eleven eller svarene. Det eleven velger
+ligger bare i nettleserens minne og forsvinner når siden lukkes eller lastes på nytt.
 
 ## Filene
 
@@ -135,5 +135,9 @@ Etter en endring kan det hende mobilen viser forrige versjon én gang. Last side
 
 ## Personvern
 
-Siden lagrer ingenting: ingen cookies, ingen lagring i nettleseren, ingen analyse, og
+Siden lagrer ingenting om deg eller svarene dine: ingen cookies, ingen analyse, og
 ingenting sendes noe sted. Alt eleven velger forsvinner når siden lukkes.
+
+For at siden skal virke uten nett, lagrer nettleseren en kopi av sidens egne filer
+(HTML, CSS, JavaScript, skrift og innhold). Det er bare programfilene, aldri svar eller
+noe annet eleven har gjort.

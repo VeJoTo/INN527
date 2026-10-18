@@ -24,9 +24,22 @@ test("innholdet er gyldig", () => {
   assert.deepEqual(Radar.valider(C), []);
 });
 
-test("12 innlegg, hvorav 2 kontrollinnlegg", () => {
-  assert.equal(C.innlegg.length, 12);
-  assert.equal(C.innlegg.filter((p) => p.kontroll).length, 2);
+test("minst ett innlegg og minst ett kontrollinnlegg", () => {
+  assert.ok(C.innlegg.length >= 1, "ingen innlegg");
+  assert.ok(C.innlegg.some((p) => p.kontroll), "ingen kontrollinnlegg");
+});
+
+test("sitater i hvor står ordrett i innlegget", () => {
+  const norm = (s) => s.replace(/\s+/g, " ").toLowerCase();
+  C.innlegg.forEach((p) => {
+    const kilde = norm(p.skjermtekst + " " + p.bildetekst);
+    p.teknikker.forEach((t) => {
+      const sitater = [...t.hvor.matchAll(/«([^»]+)»/g)].map((m) => m[1]);
+      sitater.forEach((s) => {
+        assert.ok(kilde.includes(norm(s)), "Sitatet «" + s + "» i «" + p.id + "» (" + t.id + ") står ikke ordrett i innlegget");
+      });
+    });
+  });
 });
 
 test("hver teknikk brukes minst én gang", () => {
