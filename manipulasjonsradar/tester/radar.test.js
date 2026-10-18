@@ -4,10 +4,24 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const Radar = require("../radar.js");
 
+// Gyldige tekster: hver påkrevde sti får teksten «x», og nivåene fire tekster.
+function lagTekster() {
+  const tekster = {};
+  (Radar.PAKREVDE_TEKSTER || []).forEach((sti) => {
+    const deler = sti.split(".");
+    let obj = tekster;
+    deler.slice(0, -1).forEach((n) => { obj = obj[n] = obj[n] || {}; });
+    obj[deler[deler.length - 1]] = "x";
+  });
+  tekster.reise = tekster.reise || {};
+  tekster.reise.nivaer = ["a", "b", "c", "d"];
+  return tekster;
+}
+
 // Et lite, gyldig innhold å teste mot. Hver test lager sin egen kopi.
 function lagInnhold() {
   return {
-    tekster: {},
+    tekster: lagTekster(),
     teknikker: [
       { id: "a", navn: "A", kort: "a kort", forklaring: "a forklaring" },
       { id: "b", navn: "B", kort: "b kort", forklaring: "b forklaring" }
@@ -41,6 +55,24 @@ function lagInnlegg(felter) {
 
 test("valider: gyldig innhold gir ingen feil", () => {
   assert.deepEqual(Radar.valider(lagInnhold()), []);
+});
+
+test("valider: manglende tekstnøkkel gir melding", () => {
+  const c = lagInnhold();
+  delete c.tekster.feed.kortEtikett;
+  assert.deepEqual(Radar.valider(c), ["Mangler tekst «feed.kortEtikett» under «tekster»."]);
+});
+
+test("valider: tom tekst regnes som manglende", () => {
+  const c = lagInnhold();
+  c.tekster.start.tittel = "  ";
+  assert.deepEqual(Radar.valider(c), ["Mangler tekst «start.tittel» under «tekster»."]);
+});
+
+test("valider: reise.nivaer må ha fire tekster", () => {
+  const c = lagInnhold();
+  c.tekster.reise.nivaer = ["a", "b", "c"];
+  assert.deepEqual(Radar.valider(c), ["tekster.reise.nivaer må være en liste med fire tekster."]);
 });
 
 test("valider: manglende innhold", () => {

@@ -22,6 +22,76 @@
     return Array.isArray(v) && v.every(erTekst);
   }
 
+  // Alle tekster appen leser fra «tekster» (data-tekst og data-etikett i index.html,
+  // T.del.nokkel i app.js, og T.radar[status]). Mangler én, sjekkes det her og ikke på siden.
+  // reise.nivaer er en liste og sjekkes for seg.
+  var PAKREVDE_TEKSTER = [
+    "feed.fiktiv",
+    "feed.fremdrift",
+    "feed.kommentarer",
+    "feed.kortEtikett",
+    "feed.likes",
+    "feed.skann",
+    "feed.skannet",
+    "feed.sluttTekst",
+    "feed.sluttTittel",
+    "feed.tilReisen",
+    "feed.tittel",
+    "feed.utvalgte",
+    "intro.hopp",
+    "intro.start",
+    "intro.tekst",
+    "intro.tittel",
+    "radar.funnet",
+    "radar.hjelp",
+    "radar.ikkeHer",
+    "radar.ingen",
+    "radar.ingenRiktig",
+    "radar.ingenTeknikker",
+    "radar.lukk",
+    "radar.omTeknikken",
+    "radar.oversett",
+    "radar.resultatTittel",
+    "radar.snakkOm",
+    "radar.sporsmal",
+    "radar.tilbake",
+    "radar.vis",
+    "reise.igjen",
+    "reise.ikkeMedSkannet",
+    "reise.ikkeSkannet",
+    "reise.ingenSkannet",
+    "reise.kartTeknikk",
+    "reise.kartTekst",
+    "reise.kartTittel",
+    "reise.kontrollForklaring",
+    "reise.kontrollKort",
+    "reise.nyStart",
+    "reise.refleksjonTittel",
+    "reise.soyleEtikett",
+    "reise.tekst",
+    "reise.tidslinjeTekst",
+    "reise.tidslinjeTittel",
+    "reise.tittel",
+    "reise.treffTekst",
+    "reise.treffTittel",
+    "reise.treffTittelSammen",
+    "start.alene",
+    "start.aleneBeskrivelse",
+    "start.personvern",
+    "start.ramme",
+    "start.sammen",
+    "start.sammenBeskrivelse",
+    "start.tekst",
+    "start.tittel",
+    "start.velg"
+  ];
+
+  function hentSti(obj, sti) {
+    return sti.split(".").reduce(function (o, n) {
+      return o && typeof o === "object" ? o[n] : undefined;
+    }, obj);
+  }
+
   // ---------- Validering av content.js ----------
   // Gir en liste med feilmeldinger på norsk. Tom liste betyr at alt er i orden.
 
@@ -29,7 +99,17 @@
     if (!c || typeof c !== "object") return ["Fant ikke innholdet (window.CONTENT)."];
     var feil = [];
 
-    if (!c.tekster || typeof c.tekster !== "object") feil.push("Mangler «tekster».");
+    if (!c.tekster || typeof c.tekster !== "object") {
+      feil.push("Mangler «tekster».");
+    } else {
+      PAKREVDE_TEKSTER.forEach(function (sti) {
+        if (!erTekst(hentSti(c.tekster, sti))) feil.push("Mangler tekst «" + sti + "» under «tekster».");
+      });
+      var nivaer = hentSti(c.tekster, "reise.nivaer");
+      if (!Array.isArray(nivaer) || nivaer.length !== 4 || !erTekstliste(nivaer)) {
+        feil.push("tekster.reise.nivaer må være en liste med fire tekster.");
+      }
+    }
 
     var teknikkIder = {};
     if (!Array.isArray(c.teknikker) || c.teknikker.length === 0) {
@@ -229,6 +309,7 @@
   }
 
   return {
+    PAKREVDE_TEKSTER: PAKREVDE_TEKSTER,
     valider: valider,
     tomGjetning: tomGjetning,
     veksleValg: veksleValg,
