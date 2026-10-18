@@ -170,7 +170,7 @@ window.CONTENT = {
   teknikker: [
     { id: "oss-mot-dem", navn: "Oss mot dem", kort: "…", forklaring: "…" }
   ],
-  faser: [ { nr: 1, navn: "Nøytralt" } /* … */ ],
+  faser: [ { nr: 1, navn: "Nøytralt", kort: "Nøytralt" } /* … */ ], // kort brukes i tabellen i feedreisen
   innlegg: [
     {
       id: "trening",
@@ -239,7 +239,7 @@ Eksporteres både som `window.Radar` i nettleseren og som modul for Node-tester.
 
 ### 6.3 Utseende
 
-- Mørk feed-estetikk. Én tydelig radarfarge for funn, en dempet farge for
+- Alltid mørk feed-estetikk (`color-scheme: dark`, ingen lys modus). Én tydelig radarfarge for funn, en dempet farge for
   «oversett» og en nøytral farge for «ikke her». Status skal aldri vises bare
   med farge, men også med ikon og tekst.
 - Eget uttrykk som skiller seg fra «Trykk pause».
@@ -262,8 +262,7 @@ Eksporteres både som `window.Radar` i nettleseren og som modul for Node-tester.
   teknikker, kontrollinnlegg og ingen skannede innlegg. Testene kjøres også mot
   det ekte `content.js`, så redigeringsfeil fanges opp.
 - **Ende-til-ende** i Chrome via DevTools: hele flyten i Alene-modus på 375 px
-  bredde og i Sammen-modus på 1280 px, kun tastaturnavigasjon, mørk/lys
-  systemmodus der det er relevant, og ingen konsollfeil eller nettverkskall
+  bredde og i Sammen-modus på 1280 px, kun tastaturnavigasjon, og ingen konsollfeil eller nettverkskall
   etter lasting.
 - **Tilgjengelighet:** kontrastsjekk og skjermleser-etiketter på radarstatusene.
 
