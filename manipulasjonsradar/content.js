@@ -323,7 +323,7 @@ window.CONTENT = {
       konto: "@sannhetenomgutta",
       skjermtekst: "Hvorfor sliter unge menn?\n\nSvaret er enkelt: DE har ødelagt alt for oss.",
       bildetekst: "Jobber, boliger, respekt – alt er tatt fra oss. Og de ler av deg mens det skjer. Er du ikke sint, følger du ikke med.",
-      hashtags: ["ungemenn", "sannheten", "nokernok"],
+      hashtags: ["ungemenn", "sannheten", "ingenbryrseg"],
       likes: 74100,
       kommentarer: 3880,
       utvalgteKommentarer: ["endelig noen som sier det", "hvem er «de» egentlig?"],
