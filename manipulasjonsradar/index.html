@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="nb" data-modus="alene">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="En fiktiv feed der du kan se hvilke manipulasjonsteknikker innlegg bruker. Prototype for et living lab-prosjekt.">
+  <meta name="theme-color" content="#0b0d12">
+  <meta name="color-scheme" content="dark">
+  <title>Manipulasjonsradar</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="ikoner/ikon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="ikoner/ikon-maskerbar-512.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-dvh bg-natt font-sans text-lg leading-relaxed text-tekst antialiased">
+  <!--
+    Alle synlige tekster hentes fra content.js (under «tekster»).
+    data-tekst="start.tittel" betyr: sett inn CONTENT.tekster.start.tittel her.
+    data-etikett="radar.lukk" gjør det samme for aria-label (teksten skjermlesere leser).
+    Bare én <section class="skjerm"> vises om gangen.
+    Klassene (f.eks. "text-3xl") er Tailwind. Kjør ./bygg-css.sh etter at du endrer dem.
+  -->
+  <noscript><p class="p-5">Denne siden trenger JavaScript.</p></noscript>
+
+  <!-- Vises hvis content.js har en skrivefeil og ikke kan leses.
+       Teksten står her fordi den da ikke kan hentes fra content.js. -->
+  <section id="skjerm-innholdsfeil" class="skjerm side" hidden>
+    <h1 tabindex="-1" class="display mb-4 text-4xl">Innholdsfila har en feil</h1>
+    <p class="text-dempet">Siden klarte ikke å lese <code>content.js</code>. Som regel mangler det et komma eller et anførselstegn. Se README.md under «Hvis siden blir blank eller viser en feil».</p>
+  </section>
+
+  <!-- Vises hvis content.js kan leses, men noe i innholdet ikke stemmer. -->
+  <section id="skjerm-feil" class="skjerm side" hidden>
+    <h1 tabindex="-1" class="display mb-4 text-4xl">Noe i innholdet stemmer ikke</h1>
+    <p class="mb-6 text-dempet">Rett opp dette i <code>content.js</code> og last siden på nytt:</p>
+    <ul id="feilliste" class="list-disc space-y-2 pl-6"></ul>
+  </section>
+
+  <!-- 1. Start og valg av modus -->
+  <section id="skjerm-start" class="skjerm side flex min-h-dvh flex-col justify-between gap-10" hidden>
+    <div class="pt-6">
+      <img src="ikoner/ikon.svg" alt="" class="mb-8 size-20 rounded-2xl">
+      <h1 tabindex="-1" class="display mb-6 text-5xl" data-tekst="start.tittel"></h1>
+      <p class="mb-4 text-xl" data-tekst="start.tekst"></p>
+      <p class="text-dempet" data-tekst="start.ramme"></p>
+    </div>
+    <div class="space-y-3">
+      <p class="font-bold" data-tekst="start.velg"></p>
+      <button type="button" id="velg-alene" class="knapp-modus">
+        <span class="block text-xl font-bold" data-tekst="start.alene"></span>
+        <span class="block text-base text-dempet" data-tekst="start.aleneBeskrivelse"></span>
+      </button>
+      <button type="button" id="velg-sammen" class="knapp-modus">
+        <span class="block text-xl font-bold" data-tekst="start.sammen"></span>
+        <span class="block text-base text-dempet" data-tekst="start.sammenBeskrivelse"></span>
+      </button>
+      <p class="pt-2 text-base text-dempet" data-tekst="start.personvern"></p>
+    </div>
+  </section>
+
+  <!-- 2. De seks teknikkene (kan hoppes over) -->
+  <section id="skjerm-intro" class="skjerm side" hidden>
+    <div class="mb-4 flex justify-end">
+      <button type="button" id="intro-hopp" class="knapp-tekst" data-tekst="intro.hopp"></button>
+    </div>
+    <h1 tabindex="-1" class="display mb-4 text-4xl" data-tekst="intro.tittel"></h1>
+    <p class="mb-8 text-dempet" data-tekst="intro.tekst"></p>
+    <ul id="intro-liste" class="mb-10 space-y-4"></ul>
+    <button type="button" id="intro-start" class="knapp-hoved" data-tekst="intro.start"></button>
+  </section>
+
+  <!-- 3. Feeden: ett kort per innlegg, pluss et sluttkort. Kortene lages av app.js. -->
+  <section id="skjerm-feed" class="skjerm relative" hidden>
+    <h1 tabindex="-1" class="sr-only" data-tekst="feed.tittel"></h1>
+    <div class="feed-topp">
+      <span class="kort-merke" data-tekst="feed.fiktiv"></span>
+      <p id="fremdrift" class="kort-merke tabular-nums"></p>
+    </div>
+    <ol id="feed" class="feed"></ol>
+  </section>
+
+  <!-- Radarpanelet: åpnes fra «Skann med radaren» på hvert kort. -->
+  <dialog id="radar" class="radar" aria-labelledby="radar-tittel">
+    <div class="radar-innhold">
+      <div class="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <p id="radar-konto" class="text-base text-dempet"></p>
+          <h2 id="radar-tittel" tabindex="-1" class="display text-3xl"></h2>
+        </div>
+        <button type="button" id="radar-lukk" class="knapp-ikon" data-etikett="radar.lukk"><span aria-hidden="true">✕</span></button>
+      </div>
+
+      <div id="radar-snakk" class="mb-5 rounded-2xl bg-flate-lys p-4" hidden>
+        <p class="text-sm font-bold uppercase tracking-wide text-oversett" data-tekst="radar.snakkOm"></p>
+        <p id="radar-snakk-tekst" class="mt-1 text-xl font-semibold"></p>
+      </div>
+
+      <div id="radar-gjett">
+        <p class="mb-4 text-dempet" data-tekst="radar.hjelp"></p>
+        <ul id="radar-valg" class="mb-6 space-y-2"></ul>
+        <button type="button" id="radar-vis" class="knapp-hoved" data-tekst="radar.vis" disabled></button>
+      </div>
+
+      <div id="radar-resultat" hidden>
+        <div id="radar-funn" class="mb-6 space-y-3"></div>
+        <p id="radar-notat" class="mb-6 rounded-2xl bg-flate-lys p-4" hidden></p>
+        <button type="button" id="radar-tilbake" class="knapp-hoved" data-tekst="radar.tilbake"></button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 4. Feedreisen -->
+  <section id="skjerm-reise" class="skjerm side" hidden>
+    <h1 tabindex="-1" class="display mb-4 text-5xl" data-tekst="reise.tittel"></h1>
+    <p class="mb-10 text-xl text-dempet" data-tekst="reise.tekst"></p>
+
+    <h2 class="mb-2 text-2xl font-bold" data-tekst="reise.tidslinjeTittel"></h2>
+    <p class="mb-4 text-base text-dempet" data-tekst="reise.tidslinjeTekst"></p>
+    <ol id="reise-tidslinje" class="mb-3 flex h-40 items-end gap-1.5"></ol>
+    <p class="mb-12 flex items-center gap-2 text-sm text-dempet">
+      <span class="soyle soyle-kontroll inline-block h-3 w-5 rounded-sm" aria-hidden="true"></span>
+      <span data-tekst="reise.kontrollForklaring"></span>
+    </p>
+
+    <h2 class="mb-2 text-2xl font-bold" data-tekst="reise.kartTittel"></h2>
+    <p class="mb-4 text-base text-dempet" data-tekst="reise.kartTekst"></p>
+    <div class="mb-12 overflow-x-auto">
+      <table id="reise-kart" class="w-full border-separate border-spacing-1 text-sm"></table>
+    </div>
+
+    <h2 id="reise-treff-tittel" class="mb-4 text-2xl font-bold"></h2>
+    <ul id="reise-treff" class="mb-3 space-y-3"></ul>
+    <p id="reise-ikke-skannet" class="mb-12 text-base text-dempet"></p>
+
+    <h2 class="mb-4 text-2xl font-bold" data-tekst="reise.refleksjonTittel"></h2>
+    <ul id="reise-refleksjon" class="mb-12 space-y-3"></ul>
+
+    <div class="space-y-3">
+      <button type="button" id="reise-igjen" class="knapp-hoved" data-tekst="reise.igjen"></button>
+      <button type="button" id="reise-ny" class="knapp-tekst w-full" data-tekst="reise.nyStart"></button>
+    </div>
+  </section>
+
+  <script src="content.js"></script>
+  <script src="radar.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,296 @@
+/*
+ * UTSEENDE – kildefil for Tailwind
+ * --------------------------------
+ * Ikke rediger style.css direkte. Den lages fra denne fila med:
+ *   ./bygg-css.sh
+ *
+ * Det meste av utseendet står som Tailwind-klasser i index.html og app.js.
+ * Her ligger farger, skrift, feedkortene, radarpanelet og søylene i feedreisen.
+ */
+
+@import "tailwindcss" source(none);
+@source "./index.html";
+@source "./app.js";
+
+/* Skrifttypen ligger i prosjektet, så ingenting hentes fra andre nettsteder. */
+@font-face {
+  font-family: "Archivo";
+  src: url("fonter/archivo.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-natt: #0b0d12;      /* bakgrunn */
+  --color-flate: #171a22;     /* bokser og panel */
+  --color-flate-lys: #222633;
+  --color-kant: #3a4052;
+  --color-tekst: #f3f4f7;
+  --color-dempet: #a6adbd;
+  --color-radar: #3cf0b4;     /* radaren, «du så den», hovedknapper, fokus */
+  --color-oversett: #ffb547;  /* «vanskelig å se» */
+  --color-press: #ff7a59;     /* søylene i feedreisen */
+}
+
+:root {
+  color-scheme: dark;
+  --radar-bredde: min(34rem, 45vw); /* bredden på radarpanelet i Sammen-modus */
+}
+
+@layer base {
+  html {
+    background: var(--color-natt);
+    color: var(--color-tekst);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Sammen-modus: alt blir større, så det kan leses fra en felles skjerm. */
+  html[data-modus="sammen"] {
+    font-size: 125%;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-radar);
+    outline-offset: 3px;
+  }
+
+  /* Overskrifter får fokus av skriptet (for skjermlesere), men trenger ingen ring. */
+  [tabindex="-1"]:focus {
+    outline: none;
+  }
+
+  ::selection {
+    background: var(--color-radar);
+    color: var(--color-natt);
+  }
+}
+
+@layer components {
+  .display {
+    font-stretch: 125%;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  /* Vanlige tekstskjermer (start, intro, feedreise) */
+  .side {
+    @apply mx-auto max-w-xl px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))];
+  }
+  html[data-modus="sammen"] .side {
+    max-width: 60rem;
+  }
+
+  /* ---------- Knapper ---------- */
+
+  .knapp-hoved {
+    @apply block w-full min-h-14 rounded-2xl bg-radar px-6 py-4 text-lg font-bold text-natt;
+    @apply cursor-pointer transition-transform active:scale-[0.98];
+  }
+  .knapp-hoved:disabled {
+    @apply cursor-not-allowed bg-kant text-dempet active:scale-100;
+  }
+
+  .knapp-modus {
+    @apply block w-full min-h-16 rounded-2xl border-2 border-kant bg-flate px-5 py-4 text-left;
+    @apply cursor-pointer transition-colors hover:border-radar;
+  }
+
+  .knapp-tekst {
+    @apply min-h-12 cursor-pointer px-1 font-semibold text-dempet underline underline-offset-4 hover:text-tekst;
+  }
+
+  .knapp-ikon {
+    @apply grid size-12 shrink-0 cursor-pointer place-items-center rounded-full bg-flate-lys text-xl;
+  }
+
+  /* ---------- Feeden ---------- */
+
+  .feed {
+    height: 100dvh;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    overscroll-behavior: contain;
+  }
+  /* Sammen-modus: kortet flytter seg til venstre mens radarpanelet er åpent til høyre. */
+  html.radar-apen[data-modus="sammen"] .feed {
+    padding-right: var(--radar-bredde);
+  }
+
+  .feed-topp {
+    @apply pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))];
+  }
+
+  .kort-merke {
+    @apply rounded-full bg-natt/70 px-3 py-1 text-sm font-semibold;
+  }
+
+  .kort {
+    position: relative;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 1rem;
+    height: 100dvh;
+    overflow: hidden;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    padding: max(4rem, env(safe-area-inset-top)) 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+    background: linear-gradient(165deg, var(--fra), var(--til));
+    text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+  }
+  /* Mørkere nederst, så bildeteksten alltid er lett å lese. */
+  .kort::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent 45%, rgb(0 0 0 / 0.65));
+  }
+  .kort > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .kort-skjermtekst {
+    align-self: center;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    font-size: clamp(1.75rem, 8vw, 3.25rem);
+  }
+  html[data-modus="sammen"] .kort-skjermtekst {
+    font-size: clamp(2rem, 4.5vw, 4rem);
+  }
+
+  .kort-tall {
+    @apply flex shrink-0 gap-4 text-base font-semibold;
+  }
+
+  .knapp-radar {
+    @apply mt-4 flex w-full min-h-14 cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-radar bg-natt/80 px-5 py-3 text-lg font-bold text-radar;
+    text-shadow: none;
+  }
+  .knapp-radar.er-skannet {
+    @apply bg-radar text-natt;
+  }
+
+  .kort-slutt {
+    background: var(--color-natt);
+    text-shadow: none;
+  }
+  .kort-slutt::after {
+    display: none;
+  }
+
+  /* ---------- Radarpanelet ---------- */
+
+  /* Mobil: et ark som kommer opp nedenfra. */
+  .radar {
+    margin: auto 0 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 88dvh;
+    overflow-y: auto;
+    border: 0;
+    padding: 0;
+    border-radius: 1.5rem 1.5rem 0 0;
+    background: var(--color-flate);
+    color: var(--color-tekst);
+  }
+  .radar::backdrop {
+    background: rgb(0 0 0 / 0.6);
+  }
+  .radar-innhold {
+    padding: 1.25rem 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+  }
+  @media (min-width: 40rem) {
+    .radar {
+      margin: auto;
+      max-width: 36rem;
+      border-radius: 1.5rem;
+    }
+  }
+  /* Sammen-modus: et panel til høyre, og kortet synes ved siden av. */
+  html[data-modus="sammen"] .radar {
+    margin: 0 0 0 auto;
+    width: var(--radar-bredde);
+    max-width: var(--radar-bredde);
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+  html[data-modus="sammen"] .radar::backdrop {
+    background: transparent;
+  }
+
+  .knapp-valg {
+    @apply flex w-full min-h-14 cursor-pointer items-center gap-3 rounded-2xl border-2 border-kant bg-natt px-4 py-3 text-left transition-colors hover:border-dempet;
+  }
+  .knapp-valg::before {
+    content: "";
+    @apply size-6 shrink-0 rounded-md border-2 border-dempet;
+  }
+  .knapp-valg[aria-pressed="true"] {
+    @apply border-radar;
+    background: color-mix(in srgb, var(--color-radar) 12%, var(--color-natt));
+  }
+  .knapp-valg[aria-pressed="true"]::before {
+    content: "✓";          /* reserve for eldre nettlesere */
+    content: "✓" / "";     /* skjermlesere hopper over haken */
+    @apply grid place-items-center border-radar bg-radar text-base font-bold text-natt;
+  }
+
+  .funn {
+    @apply rounded-2xl border-2 bg-natt p-4;
+  }
+  .funn[data-status="funnet"] {
+    @apply border-radar;
+  }
+  .funn[data-status="oversett"] {
+    @apply border-oversett;
+  }
+  .funn[data-status="ikkeHer"] {
+    @apply border-dashed border-kant;
+  }
+  .funn-status {
+    @apply mb-1 flex items-center gap-2 text-sm font-bold uppercase tracking-wide;
+  }
+  .funn[data-status="funnet"] .funn-status {
+    @apply text-radar;
+  }
+  .funn[data-status="oversett"] .funn-status {
+    @apply text-oversett;
+  }
+  .funn[data-status="ikkeHer"] .funn-status {
+    @apply text-dempet;
+  }
+
+  /* ---------- Feedreisen ---------- */
+
+  .soyle {
+    background: var(--color-press);
+  }
+  .soyle[data-niva="0"] {
+    background: var(--color-kant);
+  }
+  .soyle[data-niva="1"] {
+    background: color-mix(in srgb, var(--color-press) 55%, var(--color-natt));
+  }
+  .soyle[data-niva="2"] {
+    background: color-mix(in srgb, var(--color-press) 78%, var(--color-natt));
+  }
+  .soyle.soyle-kontroll {
+    background: repeating-linear-gradient(45deg, var(--color-dempet) 0 3px, transparent 3px 6px);
+    border: 1px solid var(--color-dempet);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
