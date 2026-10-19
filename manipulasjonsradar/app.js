@@ -22,7 +22,9 @@
       modus: modus || "alene", // "alene" (egen mobil) eller "sammen" (felles skjerm)
       aktivt: 0,               // hvilket kort som vises i feeden (0 = første)
       svar: {},                // innlegg-id → gjetning, f.eks. { ingen: false, teknikker: ["falsk-hast"] }
+      runde: (tilstand ? tilstand.runde : 0) + 1, // ny runde for hver «Start», se historikken
       utkast: null,            // gjetningen i radarpanelet før «Vis radaren»
+      utkastPer: {},           // innlegg-id → påbegynt gjetning, så kryssene står der om panelet lukkes og åpnes igjen
       apentInnlegg: null,      // innlegget radarpanelet viser
       apnetFra: null           // knappen som åpnet radarpanelet (får fokus tilbake)
     };
@@ -294,9 +296,45 @@
   }
 
   function startFeed() {
-    visSkjerm("skjerm-feed");
-    tilpassAlle();
+    gaTilSkjerm("skjerm-feed");
     gaTil(0);
+  }
+
+  // ---------- Historikk (tilbakeknappen) ----------
+
+  // Hver skjerm og radarpanelet får en oppføring i nettleserens historikk, så tilbakeknappen
+  // og tilbakesveip går ett steg tilbake i appen i stedet for å forlate siden.
+  // Bare skjermens navn lagres i historikken, aldri svar.
+  function leggTilHistorikk(tilstandHistorikk) {
+    tilstandHistorikk.runde = tilstand.runde;
+    history.pushState(tilstandHistorikk, "");
+  }
+
+  function gaTilSkjerm(id) {
+    leggTilHistorikk({ skjerm: id });
+    visSkjerm(id);
+    if (id === "skjerm-feed") tilpassAlle();
+  }
+
+  function vedHistorikk(e) {
+    var h = e.state || { skjerm: "skjerm-start" };
+    if ($("radar").open && !h.radar) {
+      $("radar").close(); // narRadarLukkes ser at historikken allerede er spolt tilbake
+      return;
+    }
+    // Oppføringer fra en tidligere runde viser startskjermen (svarene derfra er borte).
+    var skjerm = h.runde === tilstand.runde ? h.skjerm : "skjerm-start";
+    var naa = document.querySelector(".skjerm:not([hidden])");
+    if (!naa || naa.id !== skjerm) {
+      if (skjerm === "skjerm-reise") visReise(true);
+      else visSkjerm(skjerm);
+      if (skjerm === "skjerm-feed") gaTil(tilstand.aktivt);
+    }
+    // Fram-knappen inn i en radar som var åpen.
+    if (h.radar && h.runde === tilstand.runde && !$("radar").open) {
+      var knapp = $("feed").querySelector('[data-skann="' + h.radar + '"]');
+      if (knapp) apneRadar(h.radar, knapp);
+    }
   }
 
   // ---------- Radaren ----------
@@ -308,8 +346,9 @@
     var innlegg = finnInnlegg(id);
     tilstand.apentInnlegg = innlegg;
     tilstand.apnetFra = knapp;
-    tilstand.utkast = R.tomGjetning();
+    tilstand.utkast = tilstand.utkastPer[innlegg.id] || R.tomGjetning();
     $("radar-konto").textContent = innlegg.konto;
+    lagInnleggKopi(innlegg);
     $("radar-snakk-tekst").textContent = innlegg.snakkOm;
     // Er innlegget allerede skannet, vises resultatet. Man gjetter bare én gang.
     if (tilstand.svar[innlegg.id]) visResultat();
@@ -329,6 +368,28 @@
     tilstand.apentInnlegg = null;
     if (tilstand.apnetFra) tilstand.apnetFra.focus({ preventScroll: true });
     tilstand.apnetFra = null;
+    // Lukket med ✕, Esc eller «Tilbake til feeden»: fjern radaren fra historikken også,
+    // så tilbakeknappen etterpå går til forrige skjerm og ikke «lukker» radaren en gang til.
+    if (history.state && history.state.radar) history.back();
+  }
+
+  // Kopi av innlegget øverst i panelet, så eleven ser det mens hen gjetter.
+  function lagInnleggKopi(innlegg) {
+    var boks = $("radar-innlegg");
+    boks.textContent = "";
+    boks.style.setProperty("--fra", innlegg.bakgrunn[0]);
+    boks.style.setProperty("--til", innlegg.bakgrunn[1]);
+    boks.appendChild(lagElement("p", innlegg.skjermtekst, "innlegg-kopi-skjermtekst display"));
+    boks.appendChild(lagElement("p", innlegg.bildetekst));
+    boks.appendChild(lagElement("p", innlegg.hashtags.map(function (h) { return "#" + h; }).join(" "), "font-semibold text-tekst/80"));
+    if (innlegg.utvalgteKommentarer.length) {
+      var kommentarer = lagElement("ul", null, "mt-2 space-y-0.5 border-l-2 border-tekst/40 pl-3 text-sm text-tekst/85");
+      kommentarer.setAttribute("aria-label", T.feed.utvalgte);
+      innlegg.utvalgteKommentarer.slice(0, 3).forEach(function (k) {
+        kommentarer.appendChild(lagElement("li", k));
+      });
+      boks.appendChild(kommentarer);
+    }
   }
 
   function visGjett() {
@@ -358,6 +419,7 @@
     knapp.appendChild(tekst);
     knapp.addEventListener("click", function () {
       tilstand.utkast = R.veksleValg(tilstand.utkast, id);
+      tilstand.utkastPer[tilstand.apentInnlegg.id] = tilstand.utkast;
       oppdaterValg();
     });
     li.appendChild(knapp);
@@ -440,8 +502,10 @@
   // Søylehøyde per intensitet (0–3). Står som hele klassenavn, så Tailwind finner dem.
   var SOYLEHOYDE = ["h-3", "h-12", "h-24", "h-32"];
 
-  function visReise() {
+  // fraHistorikk = true når tilbake-/fram-knappen viser reisen (da er den allerede i historikken).
+  function visReise(fraHistorikk) {
     try {
+      if (!fraHistorikk) leggTilHistorikk({ skjerm: "skjerm-reise" });
       visReiseInnhold();
     } catch (e) {
       console.error(e);
@@ -587,17 +651,20 @@
   function kobleKnapper() {
     $("velg-alene").addEventListener("click", function () {
       settModus("alene");
-      visSkjerm("skjerm-intro");
+      gaTilSkjerm("skjerm-intro");
     });
     $("velg-sammen").addEventListener("click", function () {
       settModus("sammen");
-      visSkjerm("skjerm-intro");
+      gaTilSkjerm("skjerm-intro");
     });
     $("intro-hopp").addEventListener("click", startFeed);
     $("intro-start").addEventListener("click", startFeed);
     $("feed").addEventListener("click", function (e) {
       var knapp = e.target.closest("[data-skann]");
-      if (knapp) apneRadar(knapp.getAttribute("data-skann"), knapp);
+      if (knapp) {
+        apneRadar(knapp.getAttribute("data-skann"), knapp);
+        leggTilHistorikk({ skjerm: "skjerm-feed", radar: knapp.getAttribute("data-skann") });
+      }
     });
     $("radar-vis").addEventListener("click", visRadar);
     $("radar-lukk").addEventListener("click", lukkRadar);
@@ -615,9 +682,10 @@
     $("reise-igjen").addEventListener("click", startFeed);
     $("reise-ny").addEventListener("click", function () {
       settModus("alene");
-      visSkjerm("skjerm-start");
+      gaTilSkjerm("skjerm-start");
     });
     document.addEventListener("keydown", vedTast);
+    window.addEventListener("popstate", vedHistorikk);
   }
 
   function start() {
@@ -639,6 +707,7 @@
       kobleKnapper();
       // Skjermteksten måles på nytt når skrifttypen er lastet (den har andre mål enn reserveskriften).
       if (document.fonts) document.fonts.ready.then(tilpassAlle);
+      history.replaceState({ skjerm: "skjerm-start", runde: tilstand.runde }, "");
       visSkjerm("skjerm-start");
     } catch (e) {
       console.error(e);

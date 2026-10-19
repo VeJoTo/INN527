@@ -158,3 +158,6 @@ ingenting sendes noe sted. Alt eleven velger forsvinner når siden lukkes.
 For at siden skal virke uten nett, lagrer nettleseren en kopi av sidens egne filer
 (HTML, CSS, JavaScript, skrift og innhold). Det er bare programfilene, aldri svar eller
 noe annet eleven har gjort.
+
+Tilbakeknappen virker inne i appen fordi hver skjerm legges i nettleserens historikk for
+fanen. Der står bare navnet på skjermen (for eksempel «feeden»), aldri hva eleven har svart.

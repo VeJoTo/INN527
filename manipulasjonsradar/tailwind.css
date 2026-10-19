@@ -329,6 +329,28 @@ html[data-modus="sammen"] {
     }
   }
 
+  /* Kopi av innlegget øverst i radarpanelet. Vises bare når panelet dekker innlegget
+     (stående mobil og nettbrett), ikke når innlegget står ved siden av. */
+  .innlegg-kopi {
+    @apply space-y-1 rounded-2xl p-4 text-base;
+    background: linear-gradient(165deg, var(--fra), var(--til));
+    text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+    overflow-wrap: anywhere;
+  }
+  .innlegg-kopi-skjermtekst {
+    white-space: pre-line;
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+  html[data-modus="sammen"] .innlegg-kopi {
+    display: none;
+  }
+  @media (orientation: landscape) and (max-height: 32rem) {
+    .innlegg-kopi {
+      display: none;
+    }
+  }
+
   /* «Om teknikken»: egen pil, så det synes at teksten kan foldes ut. */
   .utvid {
     list-style: none;
