@@ -426,7 +426,8 @@ window.CONTENT = {
   // Vises nederst i feedreisen, som utgangspunkt for samtalen etterpå.
   refleksjon: [
     "Kjenner du igjen en sånn utvikling fra feeder folk på din alder ser?",
-    "Hvilket triks var vanskeligst å se? Hvorfor tror du det?",
+    // barHvisSkannet: vises bare når minst ett innlegg er skannet med radaren.
+    { sporsmal: "Hvilket triks var vanskeligst å se? Hvorfor tror du det?", barHvisSkannet: true },
     "Føltes radaren nyttig – eller som en pekefinger?"
   ]
 };

@@ -124,6 +124,48 @@
     });
     liste.appendChild(lagSluttkort());
     folgMedPaKort();
+    tilpassVedEndring();
+  }
+
+  // ---------- Skjermteksten tilpasses plassen ----------
+
+  // Skjermteksten skal være så stor som mulig uten å legge seg oppå bildeteksten.
+  // Plassen varierer med telefon, liggende/stående og om radarpanelet er åpent, så den måles.
+  var MINSTE_SKRIFT = 16; // px
+
+  function tilpassSkjermtekst(scene) {
+    var tekst = scene.firstChild;
+    var hoyde = scene.clientHeight;
+    if (!tekst || !hoyde) return; // skjult kort, måles når det vises
+    tekst.style.fontSize = "";
+    var storst = parseFloat(getComputedStyle(tekst).fontSize);
+    if (tekst.offsetHeight <= hoyde) return;
+    // Binærsøk etter største skrift som får plass.
+    var lav = MINSTE_SKRIFT, hoy = storst;
+    while (hoy - lav > 0.5) {
+      var midt = (lav + hoy) / 2;
+      tekst.style.fontSize = midt + "px";
+      if (tekst.offsetHeight <= hoyde) lav = midt;
+      else hoy = midt;
+    }
+    tekst.style.fontSize = lav + "px";
+  }
+
+  var sceneObservator = null;
+
+  function tilpassVedEndring() {
+    if (sceneObservator) sceneObservator.disconnect();
+    if (!("ResizeObserver" in window)) return;
+    sceneObservator = new ResizeObserver(function (oppforinger) {
+      oppforinger.forEach(function (o) { tilpassSkjermtekst(o.target); });
+    });
+    $("feed").querySelectorAll(".kort-scene").forEach(function (scene) {
+      sceneObservator.observe(scene);
+    });
+  }
+
+  function tilpassAlle() {
+    $("feed").querySelectorAll(".kort-scene").forEach(tilpassSkjermtekst);
   }
 
   function lagKort(innlegg, i) {
@@ -134,11 +176,13 @@
     kort.style.setProperty("--fra", innlegg.bakgrunn[0]);
     kort.style.setProperty("--til", innlegg.bakgrunn[1]);
 
-    kort.appendChild(lagElement("p", innlegg.skjermtekst, "kort-skjermtekst display"));
+    var scene = lagElement("div", null, "kort-scene");
+    scene.appendChild(lagElement("p", innlegg.skjermtekst, "kort-skjermtekst display"));
+    kort.appendChild(scene);
 
-    var bunn = lagElement("div", null, "space-y-1");
+    var bunn = lagElement("div", null, "kort-bunn space-y-1");
 
-    var topp = lagElement("div", null, "flex items-center justify-between gap-3");
+    var topp = lagElement("div", null, "flex flex-wrap items-center justify-between gap-x-3 gap-y-1");
     topp.appendChild(lagElement("p", innlegg.konto, "font-bold"));
     var tall = lagElement("p", null, "kort-tall");
     tall.appendChild(lagTall("♥", innlegg.likes, T.feed.likes));
@@ -197,6 +241,10 @@
 
   // Oppdaterer «4 av 12» når et kort er mest synlig på skjermen.
   var kortObservator = null;
+  // Kortet feeden er på vei til etter et tastetrykk. Mens den blar dit, passerer den andre kort,
+  // og de skal ikke telle som «aktivt» (ellers hopper raske tastetrykk over eller tilbake).
+  var blarMot = null;
+  var blarTidsfrist = null;
 
   function folgMedPaKort() {
     if (kortObservator) kortObservator.disconnect();
@@ -204,7 +252,12 @@
     kortObservator = new IntersectionObserver(function (oppforinger) {
       oppforinger.forEach(function (o) {
         if (!o.isIntersecting) return;
-        tilstand.aktivt = Number(o.target.getAttribute("data-indeks"));
+        var indeks = Number(o.target.getAttribute("data-indeks"));
+        if (blarMot !== null) {
+          if (indeks !== blarMot) return;
+          ferdigMedBlaing();
+        }
+        tilstand.aktivt = indeks;
         oppdaterFremdrift();
       });
     }, { root: $("feed"), threshold: 0.6 });
@@ -226,12 +279,23 @@
     i = Math.max(0, Math.min(kort.length - 1, i));
     tilstand.aktivt = i;
     var animert = myk && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (animert) {
+      blarMot = i;
+      clearTimeout(blarTidsfrist);
+      blarTidsfrist = setTimeout(ferdigMedBlaing, 1000); // i tilfelle brukeren avbryter blaingen
+    }
     kort[i].scrollIntoView({ behavior: animert ? "smooth" : "auto", block: "start" });
     oppdaterFremdrift();
   }
 
+  function ferdigMedBlaing() {
+    blarMot = null;
+    clearTimeout(blarTidsfrist);
+  }
+
   function startFeed() {
     visSkjerm("skjerm-feed");
+    tilpassAlle();
     gaTil(0);
   }
 
@@ -365,7 +429,7 @@
     if (iInnlegget) boks.appendChild(lagElement("p", iInnlegget.hvor, "mt-1 text-base"));
 
     var detaljer = lagElement("details", null, "mt-2 text-base");
-    detaljer.appendChild(lagElement("summary", T.radar.omTeknikken, "flex min-h-11 cursor-pointer items-center font-semibold text-dempet"));
+    detaljer.appendChild(lagElement("summary", T.radar.omTeknikken, "utvid flex min-h-11 cursor-pointer items-center font-semibold text-dempet"));
     detaljer.appendChild(lagElement("p", teknikk.forklaring, "mt-1 text-dempet"));
     boks.appendChild(detaljer);
     return boks;
@@ -397,7 +461,7 @@
 
     var refleksjon = $("reise-refleksjon");
     refleksjon.textContent = "";
-    C.refleksjon.forEach(function (sporsmal) {
+    R.refleksjonFor(C, reise.skannet).forEach(function (sporsmal) {
       refleksjon.appendChild(lagElement("li", sporsmal, "rounded-2xl bg-flate p-4 font-semibold"));
     });
 
@@ -469,23 +533,34 @@
       return;
     }
 
+    var ikkeMed = [];
     reise.treffPerTeknikk.forEach(function (t) {
+      if (!t.av) {
+        ikkeMed.push(t.navn);
+        return;
+      }
       var li = lagElement("li", null, "rounded-2xl bg-flate p-4");
       var topp = lagElement("div", null, "flex flex-wrap items-baseline justify-between gap-x-3");
       topp.appendChild(lagElement("span", t.navn, "font-bold"));
-      topp.appendChild(lagElement("span", t.av ? R.fyllInn(T.reise.treffTekst, { sett: t.sett, av: t.av }) : T.reise.ikkeMedSkannet, "text-base text-dempet"));
+      topp.appendChild(lagElement("span", R.fyllInn(T.reise.treffTekst, { sett: t.sett, av: t.av }), "text-base text-dempet"));
       li.appendChild(topp);
 
-      if (t.av) {
-        var spor = lagElement("div", null, "mt-2 h-2 overflow-hidden rounded-full bg-kant");
-        spor.setAttribute("aria-hidden", "true");
-        var fyll = lagElement("div", null, "h-full rounded-full bg-radar");
-        fyll.style.width = Math.round((t.sett / t.av) * 100) + "%";
-        spor.appendChild(fyll);
-        li.appendChild(spor);
-      }
+      var spor = lagElement("div", null, "mt-2 h-2 overflow-hidden rounded-full bg-kant");
+      spor.setAttribute("aria-hidden", "true");
+      var fyll = lagElement("div", null, "h-full rounded-full bg-radar");
+      fyll.style.width = Math.round((t.sett / t.av) * 100) + "%";
+      spor.appendChild(fyll);
+      li.appendChild(spor);
       liste.appendChild(li);
     });
+
+    // Teknikker som ikke var med i noen av de skannede innleggene, samles i én linje.
+    if (ikkeMed.length) {
+      var rest = lagElement("li", null, "rounded-2xl border-2 border-dashed border-kant p-4 text-base text-dempet");
+      rest.appendChild(lagElement("span", T.reise.ikkeMedSkannet + ": ", "font-semibold"));
+      rest.appendChild(document.createTextNode(ikkeMed.join(", ")));
+      liste.appendChild(rest);
+    }
   }
 
   // ---------- Tastatur ----------
@@ -562,6 +637,8 @@
       lagIntro();
       settModus("alene");
       kobleKnapper();
+      // Skjermteksten måles på nytt når skrifttypen er lastet (den har andre mål enn reserveskriften).
+      if (document.fonts) document.fonts.ready.then(tilpassAlle);
       visSkjerm("skjerm-start");
     } catch (e) {
       console.error(e);

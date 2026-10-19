@@ -38,6 +38,13 @@
 :root {
   color-scheme: dark;
   --radar-bredde: min(34rem, 45vw); /* bredden på radarpanelet i Sammen-modus */
+  --kort-maks: 36rem;               /* maksbredde på innholdet i et kort (store telefoner og nettbrett) */
+  /* Avstand til kanten, også forbi notch og avrundede hjørner når telefonen ligger. */
+  --kant-v: max(1.25rem, env(safe-area-inset-left));
+  --kant-h: max(1.25rem, env(safe-area-inset-right));
+}
+html[data-modus="sammen"] {
+  --kort-maks: 60rem;
 }
 
 @layer base {
@@ -78,14 +85,19 @@
     overflow-wrap: anywhere;
   }
 
-  /* Lange ettords-titler («Manipulasjonsradar», «Feedreisen») må få plass på smale mobiler. */
+  /* Lange ettords-titler («Manipulasjonsradar», «Feedreisen») må få plass i tekstfeltet.
+     cqi = prosent av bredden på .side, så tittelen passer både på smal mobil og stor skjerm. */
   .display-stor {
     font-size: min(3rem, 7vw);
+    font-size: min(3rem, 7cqi);
   }
 
   /* Vanlige tekstskjermer (start, intro, feedreise) */
   .side {
-    @apply mx-auto max-w-xl px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))];
+    @apply mx-auto max-w-xl pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))];
+    padding-left: var(--kant-v);
+    padding-right: var(--kant-h);
+    container-type: inline-size;
   }
   html[data-modus="sammen"] .side {
     max-width: 60rem;
@@ -128,7 +140,9 @@
   }
 
   .feed-topp {
-    @apply pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))];
+    @apply pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 pt-[max(1rem,env(safe-area-inset-top))];
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
   }
 
   .kort-merke {
@@ -144,7 +158,8 @@
     overflow: hidden;
     scroll-snap-align: start;
     scroll-snap-stop: always;
-    padding: max(4rem, env(safe-area-inset-top)) 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+    /* Store skjermer: innholdet holder seg i en midtstilt spalte på maks --kort-maks. */
+    padding: max(4rem, env(safe-area-inset-top)) max(var(--kant-h), calc(50% - var(--kort-maks) / 2)) max(1.25rem, env(safe-area-inset-bottom)) max(var(--kant-v), calc(50% - var(--kort-maks) / 2));
     background: linear-gradient(165deg, var(--fra), var(--til));
     text-shadow: 0 1px 3px rgb(0 0 0 / 0.5);
   }
@@ -159,20 +174,68 @@
   .kort > * {
     position: relative;
     z-index: 1;
+    min-width: 0; /* ellers kan lange ord og emneknagger presse kortet ut over kanten */
   }
 
+  /* Feltet over bunnteksten. Skjermteksten skaleres til å passe her (se tilpassSkjermtekst i app.js),
+     så den aldri legger seg oppå bildeteksten, uansett telefon. */
+  .kort-scene {
+    display: flex;
+    align-items: center;
+    min-height: 0;
+    overflow: hidden;
+  }
   .kort-skjermtekst {
-    align-self: center;
+    width: 100%;
     white-space: pre-line;
     overflow-wrap: anywhere;
-    font-size: clamp(1.75rem, 8vw, 3.25rem);
+    font-size: clamp(1.75rem, 8vw, 3.25rem); /* utgangspunkt før skriptet har målt */
   }
   html[data-modus="sammen"] .kort-skjermtekst {
     font-size: clamp(2rem, 4.5vw, 4rem);
   }
 
+  .kort-bunn {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
   .kort-tall {
     @apply flex shrink-0 gap-4 text-base font-semibold;
+  }
+
+  /* Liggende mobil: skjermteksten til venstre, bunnteksten til høyre i en egen kolonne som kan scrolles. */
+  @media (orientation: landscape) and (max-height: 32rem) {
+    :root {
+      --kort-maks: 60rem;
+    }
+    .kort {
+      grid-template-rows: minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+      gap: 1.5rem;
+      padding-top: max(3.5rem, env(safe-area-inset-top));
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+    .kort-bunn {
+      align-self: end;
+      max-height: 100%;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    .kort-slutt {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* Lave telefoner (f.eks. iPhone SE): litt tettere, så skjermteksten får mer plass. */
+  @media (orientation: portrait) and (max-height: 44rem) {
+    .kort {
+      gap: 0.75rem;
+      padding-top: max(3.5rem, env(safe-area-inset-top));
+    }
+    .knapp-radar {
+      margin-top: 0.75rem;
+    }
   }
 
   .knapp-radar {
@@ -210,7 +273,7 @@
     background: rgb(0 0 0 / 0.6);
   }
   .radar-innhold {
-    padding: 1.25rem 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+    padding: 1.25rem var(--kant-h) max(1.5rem, env(safe-area-inset-bottom)) var(--kant-v);
   }
   @media (min-width: 40rem) {
     .radar {
@@ -230,6 +293,58 @@
   }
   html[data-modus="sammen"] .radar::backdrop {
     background: transparent;
+  }
+
+  /* Liggende mobil: radaren blir et panel til høyre, som i Sammen-modus, så innlegget synes mens man gjetter. */
+  @media (orientation: landscape) and (max-height: 32rem) {
+    :root {
+      --radar-bredde: min(26rem, 55vw);
+    }
+    .radar {
+      margin: 0 0 0 auto;
+      width: var(--radar-bredde);
+      max-width: var(--radar-bredde);
+      height: 100dvh;
+      max-height: 100dvh;
+      border-radius: 0;
+    }
+    .radar::backdrop {
+      background: transparent;
+    }
+    .radar-innhold {
+      padding-top: max(1rem, env(safe-area-inset-top));
+      padding-left: 1.25rem;
+    }
+    html.radar-apen .feed {
+      padding-right: var(--radar-bredde);
+    }
+    /* Kortet er smalere mens panelet er åpent, så kolonnene stables. */
+    html.radar-apen .kort {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) auto;
+    }
+    html.radar-apen .kort-bunn {
+      align-self: stretch;
+      max-height: 45dvh;
+    }
+  }
+
+  /* «Om teknikken»: egen pil, så det synes at teksten kan foldes ut. */
+  .utvid {
+    list-style: none;
+  }
+  .utvid::-webkit-details-marker {
+    display: none;
+  }
+  .utvid::before {
+    content: "▸";
+    content: "▸" / "";
+    display: inline-block;
+    width: 1.25em;
+    transition: transform 0.15s;
+  }
+  details[open] > .utvid::before {
+    transform: rotate(90deg);
   }
 
   .knapp-valg {

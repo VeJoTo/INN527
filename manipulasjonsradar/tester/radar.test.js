@@ -266,3 +266,19 @@ test("kortTall", () => {
   assert.equal(Radar.kortTall(168000), "168k");
   assert.equal(Radar.kortTall(1200000), "1,2 mill.");
 });
+
+// ---------- Refleksjon ----------
+
+test("refleksjonFor: spørsmål som krever skanning, vises bare når noe er skannet", () => {
+  const c = lagInnhold();
+  c.refleksjon = ["Alltid", { sporsmal: "Etter skanning", barHvisSkannet: true }];
+  assert.deepEqual(Radar.valider(c), []);
+  assert.deepEqual(Radar.refleksjonFor(c, 0), ["Alltid"]);
+  assert.deepEqual(Radar.refleksjonFor(c, 2), ["Alltid", "Etter skanning"]);
+});
+
+test("valider: refleksjonsspørsmål som objekt må ha tekst", () => {
+  const c = lagInnhold();
+  c.refleksjon = [{ barHvisSkannet: true }];
+  assert.deepEqual(Radar.valider(c), ["«refleksjon» må være en liste med minst ett spørsmål."]);
+});

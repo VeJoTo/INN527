@@ -155,11 +155,16 @@
       });
     }
 
-    if (!Array.isArray(c.refleksjon) || c.refleksjon.length === 0 || !erTekstliste(c.refleksjon)) {
+    if (!Array.isArray(c.refleksjon) || c.refleksjon.length === 0 || !c.refleksjon.every(erRefleksjon)) {
       feil.push("«refleksjon» må være en liste med minst ett spørsmål.");
     }
 
     return feil;
+  }
+
+  // Et refleksjonsspørsmål er en tekst, eller { sporsmal: "...", barHvisSkannet: true }.
+  function erRefleksjon(r) {
+    return erTekst(r) || (r !== null && typeof r === "object" && erTekst(r.sporsmal));
   }
 
   function validerInnlegg(p, i, teknikkIder, faseNr, innleggIder) {
@@ -291,6 +296,14 @@
     };
   }
 
+  // Refleksjonsspørsmålene som tekster. Spørsmål med barHvisSkannet tas bare med
+  // når minst ett innlegg er skannet (de spør om det man så med radaren).
+  function refleksjonFor(c, skannet) {
+    return c.refleksjon
+      .filter(function (r) { return erTekst(r) || !r.barHvisSkannet || skannet > 0; })
+      .map(function (r) { return erTekst(r) ? r : r.sporsmal; });
+  }
+
   // ---------- Tekst og tall ----------
 
   // fyllInn("{nr} av {totalt}", { nr: 4, totalt: 12 }) → "4 av 12"
@@ -316,6 +329,7 @@
     kanVise: kanVise,
     vurder: vurder,
     feedreise: feedreise,
+    refleksjonFor: refleksjonFor,
     fyllInn: fyllInn,
     kortTall: kortTall
   };

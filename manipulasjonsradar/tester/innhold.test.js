@@ -78,3 +78,10 @@ test("bare kjente plassholdere i tekstene", () => {
     return hele;
   });
 });
+
+test("«vanskeligst å se» vises bare når minst ett innlegg er skannet", () => {
+  const ingen = Radar.refleksjonFor(C, 0);
+  assert.ok(ingen.length > 0, "minst ett spørsmål uten skanning");
+  assert.ok(!ingen.some((s) => /vanskeligst/.test(s)));
+  assert.ok(Radar.refleksjonFor(C, 1).some((s) => /vanskeligst/.test(s)));
+});

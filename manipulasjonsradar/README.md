@@ -87,6 +87,17 @@ dem etter radaren.
 Teknikkene står under `teknikker`. Endrer du en `id`, må du endre den samme id-en i
 alle innlegg som bruker den. Siden sier fra hvis du glemmer det.
 
+### Refleksjonsspørsmålene
+
+Spørsmålene på slutten av feedreisen står under `refleksjon`. Et spørsmål er vanligvis
+bare en tekst. Spørsmål som bare gir mening når eleven har brukt radaren, skrives slik:
+
+```js
+{ sporsmal: "Hvilket triks var vanskeligst å se? Hvorfor tror du det?", barHvisSkannet: true },
+```
+
+Da vises spørsmålet bare hvis minst ett innlegg er skannet.
+
 ### Regler for innholdet
 
 Alt er fiktivt. Ikke bruk ekte kontoer, personer, grupper, partier, steder, søkeord eller
@@ -122,6 +133,12 @@ endring må `style.css` bygges på nytt:
 ```
 
 Første gang lastes Tailwind ned til `INN527/.verktoy/` (deles med «Trykk pause»).
+
+Siden er laget for telefoner fra 320 px bredde, stående og liggende, og for projektor i
+Sammen-modus. Skjermteksten på hvert kort krymper automatisk til den får plass
+(`tilpassSkjermtekst` i `app.js`), så lange tekster legger seg aldri oppå bildeteksten.
+Liggende mobil får skjermteksten til venstre og resten til høyre, og radaren åpnes som
+et panel ved siden av innlegget.
 
 ## Publisere
 
